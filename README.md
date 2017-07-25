@@ -46,5 +46,5 @@ java -jar OpendiabetesVault.jar
 ## Getting Started!
 To get started using OpenDiabetesVault or contribute to the project, please visit our Wiki pages:
 
-* [Getting Started] (https://github.com/OpenDiabetes/OpenDiabetesVault/wiki/Getting-Started!)
-* [Contribute] (https://github.com/OpenDiabetes/OpenDiabetesVault/wiki/Contribute)
+[Getting Started] (https://github.com/OpenDiabetes/OpenDiabetesVault/wiki/Getting-Started!)
+[Contribute] (https://github.com/OpenDiabetes/OpenDiabetesVault/wiki/Contribute)
