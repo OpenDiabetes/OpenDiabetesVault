@@ -40,7 +40,7 @@ public class ImportExportCsvExample {
 
         // export
         VaultEntryCsvFileExporter exporter = new VaultEntryCsvFileExporter(new ExporterOptions());
-        exporter.exportDataToFile(csvFilePath, entries);
+        exporter.exportDataToFile(csvFilePath, entries, false);
     }
 
     public static void importCsv() throws IllegalAccessException {

@@ -79,12 +79,12 @@ public class VaultEntryCsvExportEntry implements ExportEntry {
      * {@inheritDoc}
      */
     @Override
-    public byte[] toByteEntryLine() throws IOException {
+    public char[] toByteEntryLine() throws IOException {
         ByteArrayOutputStream os = new ByteArrayOutputStream();
 
         os = writeStringArray(os, toCsvRecord());
 
-        return os.toByteArray();
+        return os.toString("UTF-8").toCharArray();
     }
 
     /**

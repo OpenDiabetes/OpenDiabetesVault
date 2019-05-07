@@ -41,7 +41,7 @@ public class ExampleDataGenerator {
 
         for (int i = 0; i < noOfEntries; i++) {
             int randomType = random.nextInt(allowedTypes.length);
-            VaultEntry tmpEntry = new VaultEntry("Random Generator", "Example Code",
+            VaultEntry tmpEntry = new VaultEntry("Random_Generator", "Example_Code",
                     VaultEntryType.valueOfIgnoreCase(allowedTypes[randomType]),
                     TimestampUtils.addMinutesToTimestamp(timestamp, i),
                     random.nextDouble() * 100);

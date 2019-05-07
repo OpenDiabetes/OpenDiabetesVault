@@ -34,8 +34,8 @@ public class VaultEntryJsonExportEntry implements ExportEntry {
     }
 
     @Override
-    public byte[] toByteEntryLine() throws IOException {
-        return json.getBytes("UTF-8");
+    public char[] toByteEntryLine() throws IOException {
+        return json.toCharArray();
     }
 
 }

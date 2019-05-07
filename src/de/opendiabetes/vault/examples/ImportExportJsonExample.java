@@ -40,7 +40,7 @@ public class ImportExportJsonExample {
 
         // export
         VaultEntryJsonFileExporter exporter = new VaultEntryJsonFileExporter(new ExporterOptions());
-        exporter.exportDataToFile(jsonFilePath, entries);
+        exporter.exportDataToFile(jsonFilePath, entries, false);
     }
 
     public static void importJson() throws IllegalAccessException {

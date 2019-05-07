@@ -18,17 +18,16 @@ package de.opendiabetes.vault.exporter;
 
 import de.opendiabetes.vault.data.container.VaultEntry;
 import de.opendiabetes.vault.util.SortVaultEntryByDate;
+import java.io.BufferedWriter;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.nio.ByteBuffer;
-import java.nio.channels.FileChannel;
-import java.nio.charset.Charset;
+import java.io.OutputStreamWriter;
 import java.util.List;
 import java.util.logging.Level;
+import java.util.zip.GZIPOutputStream;
 
 /**
  * Base class for file based exporters.
@@ -65,7 +64,7 @@ public abstract class FileExporter extends Exporter {
      * @param data
      * @return int with result status.
      */
-    private int exportDataImpl(FileOutputStream sink, List<VaultEntry> data) {
+    private int exportDataImpl(OutputStream sink, List<VaultEntry> data) {
         // check output stream
         if (sink == null) {
             String msg = "PROGRAMMING ERROR: YOU MUST PROVIDE AN OUTPUT STREAM!";
@@ -106,8 +105,11 @@ public abstract class FileExporter extends Exporter {
      * @param data
      * @return int with result status.
      */
-    public int exportDataToFile(String filePath, List<VaultEntry> data) {
+    public int exportDataToFile(String filePath, List<VaultEntry> data, boolean deflate) {
         // check file stuff        
+        if (deflate) {
+            filePath += ".gzip";
+        }
         File checkFile = new File(filePath);
         if (checkFile.exists()
                 && (!checkFile.isFile() || !checkFile.canWrite())) {
@@ -120,9 +122,14 @@ public abstract class FileExporter extends Exporter {
             FileOutputStream fileOutpuStream = new FileOutputStream(checkFile);
             LOG.log(Level.INFO, "Try exporting data to: {0}",
                     checkFile.getAbsolutePath());
-            return exportDataImpl(fileOutpuStream, data);
+            if (deflate) {
+                GZIPOutputStream zippedOutputStream = new GZIPOutputStream(fileOutpuStream);
+                return exportDataImpl(zippedOutputStream, data);
+            } else {
+                return exportDataImpl(fileOutpuStream, data);
+            }
 
-        } catch (FileNotFoundException ex) {
+        } catch (IOException ex) {
             LOG.log(Level.SEVERE, "Error accessing file for output stream", ex);
             return RESULT_FILE_ACCESS_ERROR;
         }
@@ -135,15 +142,13 @@ public abstract class FileExporter extends Exporter {
      * @param data
      * @throws IOException
      */
-    protected void writeToFile(FileOutputStream fileOutputStream, List<ExportEntry> data) throws IOException {
-        FileChannel fc = fileOutputStream.getChannel();
-        // we use a unix line feed as entry seperator. This must never be part of an entry.
-        byte[] lineFeed = "\n".getBytes(Charset.forName("UTF-8"));
+    protected void writeToFile(OutputStream fileOutputStream, List<ExportEntry> data) throws IOException {
+        BufferedWriter fc = new BufferedWriter(new OutputStreamWriter(fileOutputStream));
 
         for (ExportEntry entry : data) {
-            byte[] messageBytes = entry.toByteEntryLine();
-            fc.write(ByteBuffer.wrap(messageBytes));
-            fc.write(ByteBuffer.wrap(lineFeed));
+            char[] messageBytes = entry.toByteEntryLine();
+            fc.write(messageBytes);
+            fc.newLine();
         }
 
         fc.close();

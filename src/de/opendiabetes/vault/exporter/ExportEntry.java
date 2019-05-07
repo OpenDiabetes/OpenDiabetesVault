@@ -31,5 +31,5 @@ public interface ExportEntry {
      * @return byte array representing the entry.
      * @throws IOException Thrown if no byte entry can be calculated.
      */
-    byte[] toByteEntryLine() throws IOException;
+    char[] toByteEntryLine() throws IOException;
 }
