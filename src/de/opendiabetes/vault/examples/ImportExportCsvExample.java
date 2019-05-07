@@ -32,7 +32,7 @@ import java.util.List;
  */
 public class ImportExportCsvExample {
 
-    static final String csvFilePath = System.getProperty("user.home") + "/example.csv";
+    static final String csvFilePath = System.getProperty("user.home") + "/example.csv.gzip";
 
     public static void exportCsv() {
         // create some example data
@@ -40,7 +40,7 @@ public class ImportExportCsvExample {
 
         // export
         VaultEntryCsvFileExporter exporter = new VaultEntryCsvFileExporter(new ExporterOptions());
-        exporter.exportDataToFile(csvFilePath, entries, false);
+        exporter.exportDataToFile(csvFilePath, entries, true);
     }
 
     public static void importCsv() throws IllegalAccessException {

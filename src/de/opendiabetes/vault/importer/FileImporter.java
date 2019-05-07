@@ -20,9 +20,11 @@ import de.opendiabetes.vault.data.container.VaultEntry;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
 import java.util.logging.Level;
+import java.util.zip.GZIPInputStream;
 
 /**
  * Abstract base class for file based importers.
@@ -54,12 +56,23 @@ public abstract class FileImporter extends Importer {
             throw new IllegalAccessException(msg);
         }
 
+        // check if file is a gzip
+        boolean isDeflated = false;
+        String extension = file.getName().substring(file.getName().lastIndexOf('.') + 1);
+        if (extension.equalsIgnoreCase("gzip") || extension.equalsIgnoreCase("gz")) {
+            isDeflated = true;
+        }
+
         // Convert to InputStream
         FileInputStream fis = null;
         try {
             fis = new FileInputStream(filePath);
-            return fis;
-        } catch (FileNotFoundException ex) {
+            if (isDeflated) {
+                return new GZIPInputStream(fis);
+            } else {
+                return fis;
+            }
+        } catch (IOException ex) {
             LOG.log(Level.SEVERE, "Error opening a FileInputStream for File "
                     + filePath, ex);
             if (fis != null) {
@@ -85,20 +98,19 @@ public abstract class FileImporter extends Importer {
             throw new IllegalArgumentException(msg);
         }
 
-        if (!(source instanceof FileInputStream)) {
+        if (!(source instanceof FileInputStream) && !(source instanceof GZIPInputStream)) {
             String msg = "PROGRAMMING ERROR: YOU HAVE TO USE A FILEINPUTSTREAM FOR FILE IMPORTS!";
             LOG.severe(msg);
             throw new Error(msg);
         }
-        FileInputStream fileSource = (FileInputStream) source;
 
-        return processImport(fileSource);
+        return processImport(source);
     }
 
     public List<VaultEntry> importDataFromFile(String filePath) throws IllegalAccessException {
         return importData(convertFileToStream(filePath));
     }
 
-    protected abstract List<VaultEntry> processImport(FileInputStream fis);
+    protected abstract List<VaultEntry> processImport(InputStream fis);
 
 }

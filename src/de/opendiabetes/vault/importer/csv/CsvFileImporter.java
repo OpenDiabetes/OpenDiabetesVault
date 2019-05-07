@@ -22,6 +22,7 @@ import de.opendiabetes.vault.importer.FileImporter;
 import de.opendiabetes.vault.importer.ImporterOptions;
 import de.opendiabetes.vault.importer.csv.validator.CsvValidator;
 import java.io.FileInputStream;
+import java.io.InputStream;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.List;
@@ -56,7 +57,7 @@ public abstract class CsvFileImporter extends FileImporter {
     }
 
     @Override
-    protected List<VaultEntry> processImport(FileInputStream fileSource) {
+    protected List<VaultEntry> processImport(InputStream fileSource) {
         List<VaultEntry> importedData = new ArrayList<>();
 
         CsvReader creader = null;

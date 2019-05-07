@@ -24,7 +24,7 @@ import de.opendiabetes.vault.exporter.json.VaultEntryJsonExportObject;
 import de.opendiabetes.vault.importer.FileImporter;
 import de.opendiabetes.vault.importer.ImporterOptions;
 import java.io.BufferedInputStream;
-import java.io.FileInputStream;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.List;
 
@@ -40,7 +40,7 @@ public class VaultEntryJsonFileImporter extends FileImporter {
     }
 
     @Override
-    protected List<VaultEntry> processImport(FileInputStream fis) {
+    protected List<VaultEntry> processImport(InputStream fis) {
         InputStreamReader reader = new InputStreamReader(new BufferedInputStream(fis));
 
         GsonBuilder gb = new GsonBuilder();

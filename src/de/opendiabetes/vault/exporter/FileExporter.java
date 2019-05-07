@@ -106,11 +106,12 @@ public abstract class FileExporter extends Exporter {
      * @return int with result status.
      */
     public int exportDataToFile(String filePath, List<VaultEntry> data, boolean deflate) {
-        // check file stuff        
-        if (deflate) {
+        // check file stuff  
+        File checkFile = new File(filePath);
+        String extension = checkFile.getName().substring(checkFile.getName().lastIndexOf('.') + 1);
+        if (deflate && (extension.equalsIgnoreCase("gzip") || extension.equalsIgnoreCase("gz")))  {
             filePath += ".gzip";
         }
-        File checkFile = new File(filePath);
         if (checkFile.exists()
                 && (!checkFile.isFile() || !checkFile.canWrite())) {
             LOG.warning("File Access checks failed!");
