@@ -103,6 +103,7 @@ public abstract class FileExporter extends Exporter {
      *
      * @param filePath
      * @param data
+     * @param deflate
      * @return int with result status.
      */
     public int exportDataToFile(String filePath, List<VaultEntry> data, boolean deflate) {
