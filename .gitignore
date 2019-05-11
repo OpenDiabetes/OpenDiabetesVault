@@ -3,6 +3,12 @@ SlidingWindow.java
 Medtronic*
 TODO*
 
+# Datasets
+*.csv
+*.json
+*.csv.gz
+*.json.gz
+
 # Netbeans
 **/nbproject/private/
 build/
