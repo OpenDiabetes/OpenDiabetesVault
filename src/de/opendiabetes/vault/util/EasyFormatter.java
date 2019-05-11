@@ -16,6 +16,7 @@
  */
 package de.opendiabetes.vault.util;
 
+import java.util.Date;
 import java.util.Locale;
 
 /**
@@ -29,5 +30,21 @@ public class EasyFormatter {
 
     public static String formatDouble(double input) {
         return String.format(Locale.ENGLISH, DOUBLE_FORMAT, input).replace(",", "");
+    }
+
+    public static String formatTimestampToDefaultFormat(Date timestamp) {
+        return TimestampUtils.timestampToString(timestamp,
+                TimestampUtils.TIME_FORMAT_DATASETS);
+    }
+
+    public static String formatTimestampToLogEntry(Date timestamp) {
+        return TimestampUtils.timestampToString(timestamp,
+                "yyyy.MM.dd HH:mm");
+    }
+    
+
+    public static String formatTimestampToFilename(Date timestamp) {
+        return TimestampUtils.timestampToString(timestamp,
+                "yyyy-MM-dd-HHmm");
     }
 }

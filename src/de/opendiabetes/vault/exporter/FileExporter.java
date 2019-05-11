@@ -17,7 +17,7 @@
 package de.opendiabetes.vault.exporter;
 
 import de.opendiabetes.vault.data.container.VaultEntry;
-import de.opendiabetes.vault.util.SortVaultEntryByDate;
+import de.opendiabetes.vault.util.VaultEntryUtils;
 import java.io.BufferedWriter;
 
 import java.io.File;
@@ -44,6 +44,8 @@ public abstract class FileExporter extends Exporter {
     protected FileExporter(ExporterOptions options) {
         super(options);
     }
+
+    public abstract String getFileEnding();
 
     @Override
     public void exportData(OutputStream sink, List<VaultEntry> data) {
@@ -73,7 +75,7 @@ public abstract class FileExporter extends Exporter {
         }
 
         // sort data by date
-        data.sort(new SortVaultEntryByDate());
+        data.sort(new VaultEntryUtils());
 
         // create exportable data
         List<ExportEntry> exportData = prepareData(data);
@@ -110,7 +112,7 @@ public abstract class FileExporter extends Exporter {
         // check file stuff  
         File checkFile = new File(filePath);
         String extension = checkFile.getName().substring(checkFile.getName().lastIndexOf('.') + 1);
-        if (deflate && (extension.equalsIgnoreCase("gzip") || extension.equalsIgnoreCase("gz")))  {
+        if (deflate && (extension.equalsIgnoreCase("gzip") || extension.equalsIgnoreCase("gz"))) {
             filePath += ".gzip";
         }
         if (checkFile.exists()

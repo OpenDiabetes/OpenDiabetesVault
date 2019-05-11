@@ -53,4 +53,9 @@ public class VaultEntryCsvFileExporter extends FileExporter {
         return returnValue;
     }
 
+    @Override
+    public String getFileEnding() {
+        return "csv";
+    }
+
 }

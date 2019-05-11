@@ -70,4 +70,9 @@ public class VaultEntryJsonFileExporter extends FileExporter {
         return returnValue;
     }
 
+    @Override
+    public String getFileEnding() {
+        return "json";
+    }
+
 }

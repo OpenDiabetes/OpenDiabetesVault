@@ -19,6 +19,7 @@ package de.opendiabetes.vault.data.container;
 import de.opendiabetes.vault.util.TimestampUtils;
 import java.io.Serializable;
 import java.util.Date;
+import java.util.Objects;
 
 /**
  * This class defines a container for a measurable data entry.
@@ -126,5 +127,32 @@ public class VaultEntry implements Serializable {
     public void setValueExtension(Object valueExtension) {
         this.valueExtension = valueExtension;
     }
+
+    @Override
+    public int hashCode() {
+        int hash = 7;
+        hash = 17 * hash + Objects.hashCode(this.type);
+        hash = 17 * hash + Objects.hashCode(this.timestamp);
+        hash = 17 * hash + (int) (Double.doubleToLongBits(this.value) ^ (Double.doubleToLongBits(this.value) >>> 32));
+        hash = 17 * hash + Objects.hashCode(this.valueExtension);
+        return hash;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) {
+            return true;
+        }
+        if (obj == null) {
+            return false;
+        }
+        if (getClass() != obj.getClass()) {
+            return false;
+        }
+        final VaultEntry other = (VaultEntry) obj;
+        return true;
+    }
+    
+    
 
 }

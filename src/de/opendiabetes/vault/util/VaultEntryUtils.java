@@ -18,17 +18,29 @@ package de.opendiabetes.vault.util;
 
 import de.opendiabetes.vault.data.container.VaultEntry;
 import java.util.Comparator;
+import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * Class for sorting vault entries by date using .sort option.
  *
  * @author juehv
  */
-public class SortVaultEntryByDate implements Comparator<VaultEntry> {
+public class VaultEntryUtils implements Comparator<VaultEntry> {
 
     @Override
     public int compare(VaultEntry o1, VaultEntry o2) {
         return o1.getTimestamp().compareTo(o2.getTimestamp());
+    }
+
+    public static List<VaultEntry> removeDublicates(List<VaultEntry> list) {
+        if (list == null) {
+            return null;
+        }
+
+        List<VaultEntry> returnValue = list.stream().distinct()
+                .collect(Collectors.toList());
+        return returnValue;
     }
 
 }
