@@ -55,7 +55,7 @@ public class CliRepositoryManager {
     public static final String DIR_IMPORT = "import";
     public static final String DIR_EXPORT = "export";
     public static final String FILE_JOURNAL = "journal.txt";
-    public static final String FILE_DATA = "data.csv.gz";
+    public static final String FILE_DATA = "data.json.gz";
     public static final String REPOSITORY_VERSION = "0.1";
 
     private final FileWriter journalWriter;

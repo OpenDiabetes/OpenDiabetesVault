@@ -24,6 +24,9 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.ZoneId;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
+import java.time.temporal.TemporalAccessor;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
@@ -75,6 +78,16 @@ public class TimestampUtils {
         return calendar.getTime();
     }
 
+    public static int getSecondsOfDay(Date rawDate) {
+        Calendar calendar = GregorianCalendar.getInstance();
+        calendar.setTime(rawDate);
+        int secondsOfDay = 0;
+        secondsOfDay += calendar.get(Calendar.SECOND);
+        secondsOfDay += calendar.get(Calendar.MINUTE) * 60;
+        secondsOfDay += calendar.get(Calendar.HOUR_OF_DAY) * 3600;
+        return secondsOfDay;
+    }
+
     public static Date addMinutesToTimestamp(Date timestamp, long minutes) {
         return new Date(addMinutesToTimestamp(timestamp.getTime(), minutes));
     }
@@ -84,8 +97,44 @@ public class TimestampUtils {
         return timestamp;
     }
 
+    public static boolean gapSmallerThan(Date timestampOne, Date timestampTwo, int gapSizeInMinutes) {
+        long gapMillies = Math.abs(timestampOne.getTime() - timestampTwo.getTime());
+        int gapMinutes = (int) gapMillies / 60000;
+        return gapSizeInMinutes > gapMinutes;
+    }
+
     public static Date fromLocalDate(LocalDate inputDate) {
         return fromLocalDate(inputDate, 0);
+    }
+
+    public static Date getNextFullHour(Date timestamp) {
+        Calendar c = Calendar.getInstance();
+        c.setTime(timestamp);
+        if (c.get(Calendar.MINUTE) != 0
+                || c.get(Calendar.SECOND) != 0
+                || c.get(Calendar.MILLISECOND) != 0) {
+            c.add(Calendar.HOUR, 1);
+            c.set(Calendar.MINUTE, 0);
+            c.set(Calendar.SECOND, 0);
+            c.set(Calendar.MILLISECOND, 0);
+        }
+        return c.getTime();
+    }
+
+    /**
+     * Converts a date and time string to a {@link Date} object in local time.
+     * Strips seconds and milliseconds
+     *
+     * @param iso8601DateString ISO 8601 compliant date time string
+     * @return local Date object representing the input with seconds and
+     * milliseconds set to zero
+     */
+    public static Date fromIso8601DateString(String iso8601DateString) {
+        TemporalAccessor t;
+        t = DateTimeFormatter.ISO_DATE_TIME.parse(iso8601DateString);
+        // dates are automatically converted to local time by the toInstant() method of ZonedDateTime
+        Date date = Date.from(ZonedDateTime.from(t).toInstant());
+        return TimestampUtils.createCleanTimestamp(date);
     }
 
     public static LocalTime dateToLocalTime(Date inputDate) {

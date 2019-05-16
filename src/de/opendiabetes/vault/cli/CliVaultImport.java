@@ -20,7 +20,11 @@ import de.opendiabetes.vault.data.container.VaultEntry;
 import de.opendiabetes.vault.importer.FileImporter;
 import de.opendiabetes.vault.importer.ImporterOptions;
 import de.opendiabetes.vault.importer.csv.VaultEntryCsvFileImporter;
+import de.opendiabetes.vault.importer.json.nightscout.NightscoutImporter;
+import de.opendiabetes.vault.importer.json.nightscout.NightscoutImporterOptions;
+import de.opendiabetes.vault.importer.json.nightscout.NightscoutProfileImporter;
 import de.opendiabetes.vault.importer.json.VaultEntryJsonFileImporter;
+import de.opendiabetes.vault.importer.json.nightscout.NightscoutBasalProfilesContainer;
 import de.opendiabetes.vault.util.FileCopyUtil;
 import java.io.File;
 import java.util.ArrayList;
@@ -85,6 +89,43 @@ public class CliVaultImport implements Callable<Void> {
                             new ImporterOptions()), item));
                     repMan.writeLineToJournal("Imported file:" + item.getName());
                 }
+                break;
+            case NIGHTSCOUT:
+                // import profile
+                if (importFiles.size() >= 2) {
+                    LOG.warning("Wrong number of files. For Nightscout import one profile file and one or more data files are needed. Exit.");
+                    return null;
+                }
+
+                File profileFile = null;
+                NightscoutBasalProfilesContainer profiles = null;
+                NightscoutProfileImporter profileImporter = new NightscoutProfileImporter();
+                for (File item : importFiles) {
+                    if (item.exists() && item.canRead()) {
+                        profiles = profileImporter.readProfileFile(item.getAbsolutePath());
+                        if (!profiles.records.isEmpty()) {
+                            profileFile = item;
+                            break;
+                        }
+                    }
+                }
+
+                if (profileFile == null) {
+                    LOG.warning("Missing profile file. For Nightscout import one profile file and one or more data files are needed. Exit.");
+                    return null;
+                }
+                importFiles.remove(profileFile);
+
+                // import data using profile
+                NightscoutImporterOptions options = new NightscoutImporterOptions(
+                        profiles);
+                NightscoutImporter nsImporter = new NightscoutImporter(options);
+                for (File item : importFiles) {
+                    LOG.log(Level.INFO, "Import file:{0}", item.getName());
+                    importData.addAll(checkAndImportFile(nsImporter, item));
+                    repMan.writeLineToJournal("Imported file:" + item.getName());
+                }
+
                 break;
             default:
                 throw new AssertionError("PROGRAMMING ERROR: Missing case for this type!");

@@ -19,7 +19,6 @@ package de.opendiabetes.vault.importer;
 import de.opendiabetes.vault.data.container.VaultEntry;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;

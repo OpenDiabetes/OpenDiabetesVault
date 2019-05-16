@@ -18,7 +18,7 @@ package de.opendiabetes.vault.importer.json;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import de.opendiabetes.vault.data.adapter.VaultEntryGsonAdapter;
+import de.opendiabetes.vault.data.adapter.VaultEntryJsonAdapter;
 import de.opendiabetes.vault.data.container.VaultEntry;
 import de.opendiabetes.vault.exporter.json.VaultEntryJsonExportObject;
 import de.opendiabetes.vault.importer.FileImporter;
@@ -44,7 +44,7 @@ public class VaultEntryJsonFileImporter extends FileImporter {
         InputStreamReader reader = new InputStreamReader(new BufferedInputStream(fis));
 
         GsonBuilder gb = new GsonBuilder();
-        gb.registerTypeAdapter(VaultEntry.class, new VaultEntryGsonAdapter());
+        gb.registerTypeAdapter(VaultEntry.class, new VaultEntryJsonAdapter());
 
         Gson gson = gb.create();
         VaultEntryJsonExportObject dataContainer = gson.fromJson(reader, VaultEntryJsonExportObject.class);

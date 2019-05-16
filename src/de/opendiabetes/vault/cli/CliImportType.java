@@ -24,7 +24,7 @@ package de.opendiabetes.vault.cli;
 public enum CliImportType {
     ODV_CSV,
     ODV_JSON,
-//    NIGHTSCOUT,
+    NIGHTSCOUT,
 //    CARELINK,
 //    FREESTYLE_LIBRE,
 //    MI_BAND,
