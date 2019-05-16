@@ -9,6 +9,9 @@ TODO*
 *.csv.gz
 *.json.gz
 
+# Testrepository
+rep/
+
 # Netbeans
 **/nbproject/private/
 build/

@@ -60,22 +60,21 @@ public class CliVaultImport implements Callable<Void> {
         }
 
         ArrayList<String> fileChecksums = new ArrayList<>();
-        ArrayList<File> newImportFiles = new ArrayList<>();
+        ArrayList<File> filteredImportFiles = new ArrayList<>();
         for (File item : importFiles) {
             String chkSm = FileCopyUtil.getFileChecksumMD5(item);
             if (fileChecksums.contains(chkSm)) {
                 LOG.warning("Found file duplicate. Do not import.");
             } else {
-                newImportFiles.add(item);
+                filteredImportFiles.add(item);
                 fileChecksums.add(chkSm);
             }
         }
-        importFiles = newImportFiles;
 
         List<VaultEntry> importData = new ArrayList<>();
         switch (importType) {
             case ODV_CSV:
-                for (File item : importFiles) {
+                for (File item : filteredImportFiles) {
                     LOG.log(Level.INFO, "Import file:{0}", item.getName());
                     importData.addAll(checkAndImportFile(new VaultEntryCsvFileImporter(
                             new ImporterOptions()), item));
@@ -83,7 +82,7 @@ public class CliVaultImport implements Callable<Void> {
                 }
                 break;
             case ODV_JSON:
-                for (File item : importFiles) {
+                for (File item : filteredImportFiles) {
                     LOG.log(Level.INFO, "Import file:{0}", item.getName());
                     importData.addAll(checkAndImportFile(new VaultEntryJsonFileImporter(
                             new ImporterOptions()), item));
@@ -91,16 +90,17 @@ public class CliVaultImport implements Callable<Void> {
                 }
                 break;
             case NIGHTSCOUT:
-                // import profile
-                if (importFiles.size() >= 2) {
+                // check basic input
+                if (filteredImportFiles.size() < 2) {
                     LOG.warning("Wrong number of files. For Nightscout import one profile file and one or more data files are needed. Exit.");
                     return null;
                 }
 
+                // import profile
                 File profileFile = null;
                 NightscoutBasalProfilesContainer profiles = null;
                 NightscoutProfileImporter profileImporter = new NightscoutProfileImporter();
-                for (File item : importFiles) {
+                for (File item : filteredImportFiles) {
                     if (item.exists() && item.canRead()) {
                         profiles = profileImporter.readProfileFile(item.getAbsolutePath());
                         if (!profiles.records.isEmpty()) {
@@ -114,13 +114,15 @@ public class CliVaultImport implements Callable<Void> {
                     LOG.warning("Missing profile file. For Nightscout import one profile file and one or more data files are needed. Exit.");
                     return null;
                 }
-                importFiles.remove(profileFile);
+                ArrayList<File> filteredImportFilesWithoutProfile = new ArrayList<>();
+                filteredImportFilesWithoutProfile.addAll(filteredImportFiles);
+                filteredImportFilesWithoutProfile.remove(profileFile);
 
                 // import data using profile
                 NightscoutImporterOptions options = new NightscoutImporterOptions(
                         profiles);
                 NightscoutImporter nsImporter = new NightscoutImporter(options);
-                for (File item : importFiles) {
+                for (File item : filteredImportFilesWithoutProfile) {
                     LOG.log(Level.INFO, "Import file:{0}", item.getName());
                     importData.addAll(checkAndImportFile(nsImporter, item));
                     repMan.writeLineToJournal("Imported file:" + item.getName());
@@ -134,7 +136,7 @@ public class CliVaultImport implements Callable<Void> {
         if (!importData.isEmpty()) {
             repMan.writeLineToJournal("Import successful");
             repMan.mergeDataToRepository(importData);
-            repMan.addFilesToImportFolder(importFiles);
+            repMan.addFilesToImportFolder(filteredImportFiles);
             repMan.writeLineToJournal("Import files backuped");
         }
         repMan.closeJournal();

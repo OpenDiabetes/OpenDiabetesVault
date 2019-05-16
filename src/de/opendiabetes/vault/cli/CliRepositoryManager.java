@@ -114,8 +114,8 @@ public class CliRepositoryManager {
             INSTANCE = new CliRepositoryManager(importDir, exportDir,
                     journalFile, dataFile);
 
-            INSTANCE.writeLineToJournal("OpenDiabetes Vault Repository Journal\n");
-            INSTANCE.writeLineToJournal("-------------------------------------\n");
+            INSTANCE.writeLineToJournal("OpenDiabetes Vault Repository Journal");
+            INSTANCE.writeLineToJournal("-------------------------------------");
             INSTANCE.writeLineToJournal("Repository created in version " + REPOSITORY_VERSION);
         } catch (IOException ex) {
             LOG.log(Level.SEVERE, "Error writing journal file.", ex);
@@ -169,7 +169,7 @@ public class CliRepositoryManager {
         sb.append("\n");
         journalWriter.write(sb.toString());
         journalWriter.flush();
-        System.out.println(sb.toString());
+        System.out.print(sb.toString());
     }
 
     public String readJournal() throws IOException {

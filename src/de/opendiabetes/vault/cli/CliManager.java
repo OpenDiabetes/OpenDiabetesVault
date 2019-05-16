@@ -18,6 +18,8 @@ package de.opendiabetes.vault.cli;
 
 import java.util.List;
 import java.util.concurrent.Callable;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import picocli.CommandLine;
 
 /**
@@ -25,8 +27,8 @@ import picocli.CommandLine;
  *
  * @author juehv
  */
-@CommandLine.Command(description = "Prints the checksum (MD5 by default) of a file to STDOUT.",
-        name = "checksum", mixinStandardHelpOptions = true, version = "checksum 3.0")
+@CommandLine.Command(description = "OpenDiabetesVault Commandline Interface. Manages a git-like data vault for diabetes data processing.",
+        name = "odv", mixinStandardHelpOptions = true, version = "odv 0.1")
 public class CliManager implements Callable<Void> {
 
 //    @CommandLine.Parameters(index = "0", description = "The file whose checksum to calculate.")
@@ -35,6 +37,8 @@ public class CliManager implements Callable<Void> {
 //    @CommandLine.Option(names = {"-a", "--algorithm"}, description = "MD5, SHA-1, SHA-256, ...")
 //    private String algorithm = "SHA-1";
     public static void main(String[] args) throws Exception {
+        LOG.setLevel(Level.WARNING);
+
         CommandLine commandLine = new CommandLine(new CliManager());
 
         commandLine.addSubcommand("import", new CliVaultImport())
@@ -44,6 +48,7 @@ public class CliManager implements Callable<Void> {
 
         List<Object> result = commandLine.parseWithHandler(new CommandLine.RunAll(), args);
     }
+    private static final Logger LOG = Logger.getLogger(CliManager.class.getName());
 
     @Override
     public Void call() throws Exception {

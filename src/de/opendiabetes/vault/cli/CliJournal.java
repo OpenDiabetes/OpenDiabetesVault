@@ -29,14 +29,22 @@ import picocli.CommandLine;
         name = "odv journal", mixinStandardHelpOptions = true, version = "odv journal 0.1")
 public class CliJournal implements Callable<Void> {
 
-    @CommandLine.Option(required = true, names = "print", description = "Prints the whole journal.")
-    boolean printOption;
+    @CommandLine.Option(names = "print", paramLabel="NOTE", description = "Prints the complete journal.")
+    private boolean printOption;
+
+    @CommandLine.Parameters(defaultValue = "", index = "0", description = "Adds a note to the journal.")
+    private String note;
 
     @Override
     public Void call() throws Exception {
         if (printOption) {
             printJournal();
+        } else if (!note.isEmpty()) {
+            addNoteToJournal();
+        } else {
+            // print -h
         }
+
         return null;
     }
 
@@ -45,6 +53,16 @@ public class CliJournal implements Callable<Void> {
         if (repMan != null) {
             System.out.println(repMan.readJournal());
         }
+        repMan.closeJournal();
+    }
+
+    private void addNoteToJournal() throws IOException {
+        CliRepositoryManager repMan = CliRepositoryManager.getCurrentRepository();
+
+        if (repMan != null) {
+            repMan.writeLineToJournal("NOTE: " + note);
+        }
+        repMan.closeJournal();
     }
 
 }

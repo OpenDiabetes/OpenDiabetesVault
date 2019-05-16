@@ -35,6 +35,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.logging.Level;
 import javafx.util.Pair;
+import jdk.nashorn.internal.objects.NativeRegExp;
 
 /**
  * Imports JSON objects from a Nightscout server as {@link VaultEntry}s.
@@ -45,6 +46,8 @@ public class NightscoutImporter extends FileImporter {
 
     private final JsonParser json;
     private final NightscoutBasalProfilesContainer profiles;
+
+    public static final String SOURCE = "Nightscout";
 
     public NightscoutImporter(NightscoutImporterOptions options) {
         // TODO NS does not support data types which result in RefinedVaultEntry yet.
@@ -88,31 +91,35 @@ public class NightscoutImporter extends FileImporter {
                 boolean valid = false;
 
                 Date date = null;
+                String origin = "unknown";
                 // CGM measurements
                 if (o.has("type") && o.get("type").getAsString().equals("sgv")) {
+                    if (o.has("device") && !o.get("device").getAsString().isEmpty()) {
+                        origin = o.get("device").getAsString();
+                    }
                     date = TimestampUtils.fromIso8601DateString(o.get("dateString").getAsString());
-                    entries.add(new VaultEntry(VaultEntryType.GLUCOSE_CGM, date, o.get("sgv").getAsDouble()));
+                    entries.add(new VaultEntry(origin, SOURCE, VaultEntryType.GLUCOSE_CGM, date, o.get("sgv").getAsDouble()));
                     valid = true;
                 }
 
                 // insulin bolus
                 if (o.has("insulin") && !o.get("insulin").isJsonNull()) {
                     date = TimestampUtils.fromIso8601DateString(o.get("timestamp").getAsString());
-                    entries.add(new VaultEntry(VaultEntryType.BOLUS_NORMAL, date, o.get("insulin").getAsDouble()));
+                    entries.add(new VaultEntry(origin, SOURCE, VaultEntryType.BOLUS_NORMAL, date, o.get("insulin").getAsDouble()));
                     valid = true;
                 }
 
                 // meals
                 if (o.has("carbs") && !o.get("carbs").isJsonNull()) {
                     date = TimestampUtils.fromIso8601DateString(o.get("timestamp").getAsString());
-                    entries.add(new VaultEntry(VaultEntryType.MEAL_MANUAL, date, o.get("carbs").getAsDouble()));
+                    entries.add(new VaultEntry(origin, SOURCE, VaultEntryType.MEAL_MANUAL, date, o.get("carbs").getAsDouble()));
                     valid = true;
                 }
 
                 // temporary basal
                 if (o.has("eventType") && o.get("eventType").getAsString().equals("Temp Basal")) {
                     date = TimestampUtils.fromIso8601DateString(o.get("timestamp").getAsString());
-                    VaultEntry tmpEntry = new VaultEntry(VaultEntryType.BASAL_TEMP, date, o.get("rate").getAsDouble());
+                    VaultEntry tmpEntry = new VaultEntry(origin, SOURCE, VaultEntryType.BASAL_TEMP, date, o.get("rate").getAsDouble());
                     tmpEntry.setValueExtension(o.get("duration").getAsDouble());
                     entries.add(tmpEntry);
                     valid = true;
@@ -180,7 +187,7 @@ public class NightscoutImporter extends FileImporter {
             // generate entries
             while (nextTimeStamp.before(to)) {
                 double value = profile.getBasalForTimeOfDay(nextTimeStamp);
-                basalProfileEntries.add(new VaultEntry(VaultEntryType.BASAL_PROFILE,
+                basalProfileEntries.add(new VaultEntry("Nightscout Basal Profile", SOURCE, VaultEntryType.BASAL_PROFILE,
                         nextTimeStamp, value));
                 nextTimeStamp = TimestampUtils.addMinutesToTimestamp(nextTimeStamp, 60);
                 LOG.log(Level.INFO, "Generate basal profile item with value: {0}", value);

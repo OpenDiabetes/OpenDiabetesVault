@@ -41,7 +41,7 @@ public class CliVaultInit implements Callable<Void> {
     public final String DIR_IMPORT = "import";
     public final String DIR_EXPORT = "export";
 
-    @CommandLine.Parameters(index = "0", description = "repository name")
+    @CommandLine.Parameters(index = "0", paramLabel="REPO", description = "repository name")
     private String repositoryName;
 
     @CommandLine.Option(names = {"-f", "--force"}, description = "overrides existing repositoriy")
@@ -50,7 +50,6 @@ public class CliVaultInit implements Callable<Void> {
     @Override
     public Void call() throws Exception {
         File targetDir = new File(repositoryName);
-        System.out.println("" + targetDir.exists());
         if (targetDir.exists() && force) {
             Files.walk(Paths.get(targetDir.getAbsolutePath()))
                     .sorted(Comparator.reverseOrder())
@@ -68,7 +67,7 @@ public class CliVaultInit implements Callable<Void> {
 
         manager.closeJournal();
 
-        LOG.log(Level.INFO, "Repository \"{0}\" created in version {1}"
+        LOG.log(Level.INFO, "Repository \"{0}\" created in version "
                 + CliRepositoryManager.REPOSITORY_VERSION, repositoryName);
 
         return null;
