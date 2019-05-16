@@ -22,6 +22,7 @@ import de.opendiabetes.vault.data.container.VaultEntryType;
 import de.opendiabetes.vault.exporter.ExportEntry;
 import de.opendiabetes.vault.exporter.ExporterOptions;
 import de.opendiabetes.vault.exporter.FileExporter;
+import de.opendiabetes.vault.util.VaultEntryUtils;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -30,10 +31,10 @@ import java.util.List;
  *
  * @author juehv
  */
-public class VaultEntryCsvFileExporter extends FileExporter {
+public class VaultEntryCsvFileExporter extends FileExporter<VaultEntry> {
 
     public VaultEntryCsvFileExporter(ExporterOptions options) {
-        super(options);
+        super(options, new VaultEntryUtils());
     }
 
     @Override
@@ -41,7 +42,7 @@ public class VaultEntryCsvFileExporter extends FileExporter {
         List<ExportEntry> returnValue = new ArrayList<>();
         VaultEntryCsvAdapter adapter = new VaultEntryCsvAdapter();
 
-        returnValue.add(VaultEntryCsvExportEntry.getHeaderEntry());
+        returnValue.add(new CsvExportEntry(VaultEntryCsvAdapter.getCsvHeader()));
         for (VaultEntry item : data) {
             if (!options.exportRefinedVaultEntries
                     && item.getType() == VaultEntryType.REFINED_VAULT_ENTRY) {

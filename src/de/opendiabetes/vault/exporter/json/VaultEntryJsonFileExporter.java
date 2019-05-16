@@ -24,6 +24,7 @@ import de.opendiabetes.vault.data.container.VaultEntryType;
 import de.opendiabetes.vault.exporter.FileExporter;
 import de.opendiabetes.vault.exporter.ExportEntry;
 import de.opendiabetes.vault.exporter.ExporterOptions;
+import de.opendiabetes.vault.util.VaultEntryUtils;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -32,10 +33,10 @@ import java.util.List;
  *
  * @author juehv
  */
-public class VaultEntryJsonFileExporter extends FileExporter {
+public class VaultEntryJsonFileExporter extends FileExporter<VaultEntry> {
 
     public VaultEntryJsonFileExporter(ExporterOptions options) {
-        super(options);
+        super(options, new VaultEntryUtils());
     }
 
     @Override

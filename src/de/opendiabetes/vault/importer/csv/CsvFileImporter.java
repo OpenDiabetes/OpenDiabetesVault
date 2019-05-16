@@ -17,11 +17,9 @@
 package de.opendiabetes.vault.importer.csv;
 
 import com.csvreader.CsvReader;
-import de.opendiabetes.vault.data.container.VaultEntry;
 import de.opendiabetes.vault.importer.FileImporter;
 import de.opendiabetes.vault.importer.ImporterOptions;
 import de.opendiabetes.vault.importer.csv.validator.CsvValidator;
-import java.io.FileInputStream;
 import java.io.InputStream;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
@@ -33,7 +31,7 @@ import java.util.logging.Level;
  *
  * @author juehv
  */
-public abstract class CsvFileImporter extends FileImporter {
+public abstract class CsvFileImporter<T> extends FileImporter<T> {
 
     protected final CsvValidator validator;
     protected char[] delimiter;
@@ -57,8 +55,8 @@ public abstract class CsvFileImporter extends FileImporter {
     }
 
     @Override
-    protected List<VaultEntry> processImport(InputStream fileSource) {
-        List<VaultEntry> importedData = new ArrayList<>();
+    protected List<T> processImport(InputStream fileSource) {
+        List<T> importedData = new ArrayList<>();
 
         CsvReader creader = null;
         try {
@@ -86,9 +84,9 @@ public abstract class CsvFileImporter extends FileImporter {
             // read entries
             // creader will never be null at this point
             while (creader.readRecord()) {
-                List<VaultEntry> entryList = parseEntry(creader);
+                List<T> entryList = parseEntry(creader);
                 if (entryList != null && !entryList.isEmpty()) {
-                    for (VaultEntry item : entryList) {
+                    for (T item : entryList) {
                         importedData.add(item);
                         LOG.log(Level.FINE, "Got Entry: {0}", entryList.toString());
                     }
@@ -101,6 +99,6 @@ public abstract class CsvFileImporter extends FileImporter {
         return importedData;
     }
 
-    protected abstract List<VaultEntry> parseEntry(CsvReader creader) throws Exception;
+    protected abstract List<T> parseEntry(CsvReader creader) throws Exception;
 
 }

@@ -16,7 +16,6 @@
  */
 package de.opendiabetes.vault.importer;
 
-import de.opendiabetes.vault.data.container.VaultEntry;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
@@ -27,7 +26,7 @@ import java.util.logging.Logger;
  *
  * @author juehv
  */
-public abstract class Importer {
+public abstract class Importer<T> {
 
     protected final static Logger LOG = Logger.getLogger(Importer.class.getName());
     protected final ImporterOptions options;
@@ -49,7 +48,7 @@ public abstract class Importer {
      * @param source Data source.
      * @return VaultEntries representing the data from input source.
      */
-    public abstract List<VaultEntry> importData(InputStream source);
+    public abstract List<T> importData(InputStream source);
 
     /**
      * Importer specific post processing if a second pass is needed after
@@ -58,11 +57,11 @@ public abstract class Importer {
      * @param importedData Data to clean.
      * @return Cleaned list of VaultEntries
      */
-    public List<VaultEntry> postProcessingData(List<VaultEntry> importedData) {
-        List<VaultEntry> cleanedData = new ArrayList<>();
-        for (VaultEntry item : importedData) {
+    public List<T> postProcessingData(List<T> importedData) {
+        List<T> cleanedData = new ArrayList<>();
+        for (T item : importedData) {
             boolean duplicate = false;
-            for (VaultEntry savedItem : cleanedData) {
+            for (T savedItem : cleanedData) {
                 if (item.equals(savedItem)) {
                     // identified item as duplicate
                     duplicate = true;

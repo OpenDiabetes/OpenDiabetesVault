@@ -16,8 +16,11 @@
  */
 package de.opendiabetes.vault.util;
 
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
+import java.util.TimeZone;
 
 /**
  * container class for standard formatting problems
@@ -41,10 +44,16 @@ public class EasyFormatter {
         return TimestampUtils.timestampToString(timestamp,
                 "yyyy.MM.dd HH:mm");
     }
-    
 
     public static String formatTimestampToFilename(Date timestamp) {
         return TimestampUtils.timestampToString(timestamp,
                 "yyyy-MM-dd-HHmm");
+    }
+
+    public static String formatTimestampToIso8601(Date timestamp) {
+        TimeZone tz = TimeZone.getTimeZone("UTC");
+        DateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm'Z'"); // Quoted "Z" to indicate UTC, no timezone offset
+        df.setTimeZone(tz);
+        return df.format(new Date());
     }
 }

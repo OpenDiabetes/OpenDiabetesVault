@@ -38,6 +38,8 @@ import java.util.logging.Logger;
  */
 public class VaultEntryJsonAdapter implements JsonSerializer<VaultEntry>, JsonDeserializer<VaultEntry> {
 
+    private static final Logger LOG = Logger.getLogger(VaultEntryJsonAdapter.class.getName());
+
     /**
      * Serializer for VaultEntries.
      *
@@ -56,6 +58,8 @@ public class VaultEntryJsonAdapter implements JsonSerializer<VaultEntry>, JsonDe
         }
         obj.addProperty("type", entry.getType().toString());
         obj.addProperty("epoch", entry.getTimestamp().getTime());
+        obj.addProperty("isoTime", EasyFormatter.formatTimestampToIso8601(
+                entry.getTimestamp()));
 
         // add value if needed
         switch (entry.getType()) {
@@ -145,7 +149,6 @@ public class VaultEntryJsonAdapter implements JsonSerializer<VaultEntry>, JsonDe
 
         return obj;
     }
-    private static final Logger LOG = Logger.getLogger(VaultEntryJsonAdapter.class.getName());
 
     /**
      * Deserializer for JSON data.

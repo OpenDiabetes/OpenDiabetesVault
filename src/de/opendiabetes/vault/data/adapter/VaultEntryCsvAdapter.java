@@ -19,8 +19,9 @@ package de.opendiabetes.vault.data.adapter;
 import com.google.gson.JsonParseException;
 import de.opendiabetes.vault.data.container.VaultEntry;
 import de.opendiabetes.vault.data.container.VaultEntryType;
-import de.opendiabetes.vault.exporter.csv.VaultEntryCsvExportEntry;
+import de.opendiabetes.vault.exporter.csv.CsvExportEntry;
 import de.opendiabetes.vault.util.EasyFormatter;
+import de.opendiabetes.vault.util.TimestampUtils;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.logging.Logger;
@@ -32,10 +33,23 @@ import java.util.logging.Logger;
  */
 public class VaultEntryCsvAdapter {
 
-    public VaultEntryCsvExportEntry serialize(final VaultEntry entry) {
+    private static final Logger LOG = Logger.getLogger(VaultEntryCsvAdapter.class.getName());
+
+    public static String[] getCsvHeader() {
+        return new String[]{
+            "timestamp",
+            "type",
+            "value",
+            "valueExtension",
+            "origin",
+            "source"
+        };
+    }
+
+    public CsvExportEntry serialize(final VaultEntry entry) {
         ArrayList<String> csvRecord = new ArrayList<>();
 
-        csvRecord.add(String.valueOf(entry.getTimestamp().getTime()));
+        csvRecord.add(EasyFormatter.formatTimestampToIso8601(entry.getTimestamp()));
         csvRecord.add(entry.getType().toString());
 
         // add value if needed
@@ -133,11 +147,10 @@ public class VaultEntryCsvAdapter {
             csvRecord.add("");
         }
 
-        return new VaultEntryCsvExportEntry(csvRecord.toArray(new String[]{}));
+        return new CsvExportEntry(csvRecord.toArray(new String[]{}));
     }
-    private static final Logger LOG = Logger.getLogger(VaultEntryCsvAdapter.class.getName());
 
-    public VaultEntry deserialize(final VaultEntryCsvExportEntry entry) {
+    public VaultEntry deserialize(final CsvExportEntry entry) {
         String origin = null;
         String source = null;
         VaultEntryType vType = null;
@@ -160,7 +173,7 @@ public class VaultEntryCsvAdapter {
         }
 
         if (!entry.toCsvRecord()[0].isEmpty()) {
-            timestamp = new Date(Long.parseLong(entry.toCsvRecord()[0]));
+            timestamp = TimestampUtils.fromIso8601DateString(entry.toCsvRecord()[0]);
         }
         if (timestamp == null) {
             throw new JsonParseException("No timestamp found.");

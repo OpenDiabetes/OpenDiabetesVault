@@ -16,7 +16,6 @@
  */
 package de.opendiabetes.vault.importer;
 
-import de.opendiabetes.vault.data.container.VaultEntry;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -30,7 +29,7 @@ import java.util.zip.GZIPInputStream;
  *
  * @author juehv
  */
-public abstract class FileImporter extends Importer {
+public abstract class FileImporter<T> extends Importer<T> {
 
     /**
      * Takes a filepath and converts it to an InputStream.
@@ -90,7 +89,7 @@ public abstract class FileImporter extends Importer {
     }
 
     @Override
-    public List<VaultEntry> importData(InputStream source) {
+    public List<T> importData(InputStream source) {
         if (source == null) {
             String msg = "Source is null";
             LOG.severe(msg);
@@ -106,10 +105,10 @@ public abstract class FileImporter extends Importer {
         return processImport(source);
     }
 
-    public List<VaultEntry> importDataFromFile(String filePath) throws IllegalAccessException {
+    public List<T> importDataFromFile(String filePath) throws IllegalAccessException {
         return importData(convertFileToStream(filePath));
     }
 
-    protected abstract List<VaultEntry> processImport(InputStream fis);
+    protected abstract List<T> processImport(InputStream fis);
 
 }

@@ -28,7 +28,7 @@ import java.util.logging.Logger;
  *
  * @author juehv
  */
-public class VaultEntryCsvExportEntry implements ExportEntry {
+public class CsvExportEntry implements ExportEntry {
 
     /**
      * Declaration of the delimiter used.
@@ -43,27 +43,8 @@ public class VaultEntryCsvExportEntry implements ExportEntry {
      */
     private final String[] data;
 
-    public VaultEntryCsvExportEntry(String[] data) {
-        if (data.length != (getCsvHeader()).length) {
-            throw new AssertionError("PROGRAMMING ERROR: Data does not match header.");
-        }
+    public CsvExportEntry(String[] data) {
         this.data = data;
-    }
-
-    public static VaultEntryCsvExportEntry getHeaderEntry() {
-        VaultEntryCsvExportEntry header = new VaultEntryCsvExportEntry(getCsvHeader());
-        return header;
-    }
-
-    public static String[] getCsvHeader() {
-        return new String[]{
-            "timestamp",
-            "type",
-            "value",
-            "valueExtension",
-            "origin",
-            "source"
-        };
     }
 
     /**
@@ -106,7 +87,7 @@ public class VaultEntryCsvExportEntry implements ExportEntry {
                 os.write(line.getBytes(Charset.forName("UTF-8")));
                 delimiter = delimiterConverted;
             } catch (IOException ex) {
-                Logger.getLogger(VaultEntryCsvExportEntry.class.getName()).log(Level.SEVERE,
+                Logger.getLogger(CsvExportEntry.class.getName()).log(Level.SEVERE,
                         "Error converting String in UTF8", ex);
                 throw ex;
             }

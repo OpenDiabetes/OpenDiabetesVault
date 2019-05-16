@@ -17,39 +17,37 @@
 package de.opendiabetes.vault.importer.csv;
 
 import com.csvreader.CsvReader;
-import de.opendiabetes.vault.data.adapter.VaultEntryCsvAdapter;
-import de.opendiabetes.vault.data.container.VaultEntry;
+import de.opendiabetes.vault.data.adapter.SliceEntryCsvAdapter;
+import de.opendiabetes.vault.data.container.SliceEntry;
 import de.opendiabetes.vault.exporter.csv.CsvExportEntry;
 import de.opendiabetes.vault.importer.ImporterOptions;
-import de.opendiabetes.vault.importer.csv.validator.VaultEntryCsvValidator;
+import de.opendiabetes.vault.importer.csv.validator.SliceEntryCsvValidator;
 import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Importer for simple VaultEntry csv files.
+ * Importer for simple SliceEntry csv files.
  *
  * @author juehv
  */
-public class VaultEntryCsvFileImporter extends CsvFileImporter<VaultEntry> {
+public class SliceEntryCsvFileImporter extends CsvFileImporter<SliceEntry> {
 
-    public VaultEntryCsvFileImporter(ImporterOptions options) {
-        super(options, new VaultEntryCsvValidator(), new char[]{','});
+    public SliceEntryCsvFileImporter(ImporterOptions options) {
+        super(options, new SliceEntryCsvValidator(), new char[]{','});
     }
 
     @Override
-    protected List<VaultEntry> parseEntry(CsvReader creader) throws Exception {
-        VaultEntryCsvAdapter adapter = new VaultEntryCsvAdapter();
-        ArrayList<VaultEntry> returnValue = new ArrayList<>();
+    protected List<SliceEntry> parseEntry(CsvReader creader) throws Exception {
+        SliceEntryCsvAdapter adapter = new SliceEntryCsvAdapter();
+        ArrayList<SliceEntry> returnValue = new ArrayList<>();
         ArrayList<String> csvRecord = new ArrayList<>();
-        VaultEntryCsvValidator veValidator = (VaultEntryCsvValidator) validator;
+        SliceEntryCsvValidator veValidator = (SliceEntryCsvValidator) validator;
 
         // read csv line
         csvRecord.add(veValidator.getTimestamp(creader));
-        csvRecord.add(veValidator.getType(creader));
-        csvRecord.add(veValidator.getValue(creader));
-        csvRecord.add(veValidator.getValueExtension(creader));
-        csvRecord.add(veValidator.getOrigin(creader));
+        csvRecord.add(veValidator.getDuration(creader));
         csvRecord.add(veValidator.getSource(creader));
+        csvRecord.add(veValidator.getLabel(creader));
 
         // deserialize
         CsvExportEntry entry = new CsvExportEntry(csvRecord.toArray(new String[]{}));

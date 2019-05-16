@@ -35,7 +35,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.logging.Level;
 import javafx.util.Pair;
-import jdk.nashorn.internal.objects.NativeRegExp;
 
 /**
  * Imports JSON objects from a Nightscout server as {@link VaultEntry}s.

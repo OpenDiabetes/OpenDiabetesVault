@@ -16,10 +16,14 @@
  */
 package de.opendiabetes.vault.examples;
 
+import de.opendiabetes.vault.data.container.LabeledSliceEntry;
+import de.opendiabetes.vault.data.container.SliceEntry;
 import de.opendiabetes.vault.data.container.VaultEntry;
 import de.opendiabetes.vault.exporter.ExporterOptions;
+import de.opendiabetes.vault.exporter.csv.SliceEntryCsvFileExporter;
 import de.opendiabetes.vault.exporter.csv.VaultEntryCsvFileExporter;
 import de.opendiabetes.vault.importer.ImporterOptions;
+import de.opendiabetes.vault.importer.csv.SliceEntryCsvFileImporter;
 import de.opendiabetes.vault.importer.csv.VaultEntryCsvFileImporter;
 import java.io.File;
 import java.io.IOException;
@@ -30,23 +34,28 @@ import java.util.List;
  *
  * @author mswin
  */
-public class ImportExportCsvExample {
+public class ImportExportSliceCsvExample {
 
-    static final String csvFilePath = System.getProperty("user.home") + "/example.csv";
+    static final String csvFilePath = System.getProperty("user.home") + "/exampleSlice.csv";
 
     public static void exportCsv() {
         // create some example data
-        List<VaultEntry> entries = ExampleDataGenerator.generateVaultEntries(1000);
+        List<LabeledSliceEntry> entries = ExampleDataGenerator.generateLabeledSliceEntries(1000);
 
         // export
-        VaultEntryCsvFileExporter exporter = new VaultEntryCsvFileExporter(new ExporterOptions());
+        SliceEntryCsvFileExporter exporter = new SliceEntryCsvFileExporter(new ExporterOptions());
         exporter.exportDataToFile(csvFilePath, entries, false);
     }
 
     public static void importCsv() throws IllegalAccessException {
-        VaultEntryCsvFileImporter importer = new VaultEntryCsvFileImporter(new ImporterOptions());
-        List<VaultEntry> entries = importer.importDataFromFile(csvFilePath);
+        SliceEntryCsvFileImporter importer = new SliceEntryCsvFileImporter(new ImporterOptions());
+        List<SliceEntry> entries = importer.importDataFromFile(csvFilePath);
         System.out.println("Imported " + entries.size() + " Entries!");
+        if (entries.get(0) instanceof LabeledSliceEntry) {
+            System.out.println("Registered as LabeledSliceEntry :)");
+        } else {
+            System.out.println("Not correctly registered as LabeledSliceEntry :(");
+        }
     }
 
     /**

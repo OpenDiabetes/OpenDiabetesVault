@@ -36,7 +36,7 @@ public class ImportExportJsonExample {
 
     public static void exportJson() {
         // create some example data        
-        List<VaultEntry> entries = ExampleDataGenerator.generate(1000);
+        List<VaultEntry> entries = ExampleDataGenerator.generateVaultEntries(1000);
 
         // export
         VaultEntryJsonFileExporter exporter = new VaultEntryJsonFileExporter(new ExporterOptions());

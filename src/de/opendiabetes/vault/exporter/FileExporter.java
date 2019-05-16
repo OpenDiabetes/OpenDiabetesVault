@@ -25,6 +25,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
+import java.util.Comparator;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.zip.GZIPOutputStream;
@@ -34,21 +35,24 @@ import java.util.zip.GZIPOutputStream;
  *
  * @author juehv
  */
-public abstract class FileExporter extends Exporter {
+public abstract class FileExporter<T> extends Exporter<T> {
 
     public final static int RESULT_OK = 0;
     public final static int RESULT_ERROR = -1;
     public final static int RESULT_NO_DATA = -2;
     public final static int RESULT_FILE_ACCESS_ERROR = -3;
 
-    protected FileExporter(ExporterOptions options) {
+    private final Comparator comparator;
+
+    protected FileExporter(ExporterOptions options, Comparator comparatorForUsedDatatype) {
         super(options);
+        this.comparator = comparatorForUsedDatatype;
     }
 
     public abstract String getFileEnding();
 
     @Override
-    public void exportData(OutputStream sink, List<VaultEntry> data) {
+    public void exportData(OutputStream sink, List<T> data) {
         if (sink == null || !(sink instanceof FileOutputStream)) {
             String msg = "PROGRAMMING ERROR: FileExporter can only write to FileOutputStream!";
             LOG.severe(msg);
@@ -66,7 +70,7 @@ public abstract class FileExporter extends Exporter {
      * @param data
      * @return int with result status.
      */
-    private int exportDataImpl(OutputStream sink, List<VaultEntry> data) {
+    private int exportDataImpl(OutputStream sink, List<T> data) {
         // check output stream
         if (sink == null) {
             String msg = "PROGRAMMING ERROR: YOU MUST PROVIDE AN OUTPUT STREAM!";
@@ -74,8 +78,12 @@ public abstract class FileExporter extends Exporter {
             throw new IllegalArgumentException(msg);
         }
 
+        if (data == null || data.isEmpty()) {
+            return RESULT_NO_DATA;
+        }
+
         // sort data by date
-        data.sort(new VaultEntryUtils());
+        data.sort(comparator);
 
         // create exportable data
         List<ExportEntry> exportData = prepareData(data);
@@ -108,7 +116,7 @@ public abstract class FileExporter extends Exporter {
      * @param deflate
      * @return int with result status.
      */
-    public int exportDataToFile(String filePath, List<VaultEntry> data, boolean deflate) {
+    public int exportDataToFile(String filePath, List data, boolean deflate) {
         // check file stuff  
         File checkFile = new File(filePath);
         String extension = checkFile.getName().substring(checkFile.getName().lastIndexOf('.') + 1);

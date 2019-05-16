@@ -16,7 +16,6 @@
  */
 package de.opendiabetes.vault.exporter;
 
-import de.opendiabetes.vault.data.container.VaultEntry;
 import de.opendiabetes.vault.importer.Importer;
 import java.io.OutputStream;
 import java.util.List;
@@ -27,7 +26,7 @@ import java.util.logging.Logger;
  * 
  * @author juehv
  */
-public abstract class Exporter {
+public abstract class Exporter<T> {
 
     protected final static Logger LOG = Logger.getLogger(Importer.class.getName());
     protected final ExporterOptions options;
@@ -49,7 +48,7 @@ public abstract class Exporter {
      * @param sink target for export (e.g., a file)
      * @param data data to be exported
      */
-    public abstract void exportData(OutputStream sink, List<VaultEntry> data);
+    public abstract void exportData(OutputStream sink, List<T> data);
 
     
 
@@ -58,6 +57,6 @@ public abstract class Exporter {
      *
      * @return
      */
-    protected abstract List<ExportEntry> prepareData(List<VaultEntry> data);
+    protected abstract List<ExportEntry> prepareData(List<T> data);
     
 }

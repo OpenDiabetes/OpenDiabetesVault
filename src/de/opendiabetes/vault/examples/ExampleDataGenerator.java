@@ -16,6 +16,8 @@
  */
 package de.opendiabetes.vault.examples;
 
+import de.opendiabetes.vault.data.container.LabelType;
+import de.opendiabetes.vault.data.container.LabeledSliceEntry;
 import de.opendiabetes.vault.data.container.VaultEntry;
 import de.opendiabetes.vault.data.container.VaultEntryType;
 import de.opendiabetes.vault.util.TimestampUtils;
@@ -23,6 +25,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Random;
+import javafx.scene.control.Labeled;
 
 /**
  * Generator for random example data (does not reflect real data but is used to
@@ -34,7 +37,7 @@ public class ExampleDataGenerator {
 
     private static final String[] allowedTypes = {"BOLUS_NORMAL", "BASAL_PROFILE", "GLUCOSE_CGM"};
 
-    public static List<VaultEntry> generate(int noOfEntries) {
+    public static List<VaultEntry> generateVaultEntries(int noOfEntries) {
         Random random = new Random();
         Date timestamp = new Date();
         ArrayList<VaultEntry> entries = new ArrayList<>();
@@ -45,6 +48,23 @@ public class ExampleDataGenerator {
                     VaultEntryType.valueOfIgnoreCase(allowedTypes[randomType]),
                     TimestampUtils.addMinutesToTimestamp(timestamp, i),
                     random.nextDouble() * 100);
+            entries.add(tmpEntry);
+        }
+
+        return entries;
+    }
+
+    public static List<LabeledSliceEntry> generateLabeledSliceEntries(int noOfEntries) {
+        Random random = new Random();
+        Date timestamp = new Date();
+        ArrayList<LabeledSliceEntry> entries = new ArrayList<>();
+
+        for (int i = 0; i < noOfEntries; i++) {
+            int randomType = random.nextInt(LabelType.values().length);
+            LabeledSliceEntry tmpEntry = new LabeledSliceEntry("random generator",
+                    LabelType.values()[randomType],
+                    TimestampUtils.addMinutesToTimestamp(timestamp, i),
+                    random.nextInt(300));
             entries.add(tmpEntry);
         }
 
