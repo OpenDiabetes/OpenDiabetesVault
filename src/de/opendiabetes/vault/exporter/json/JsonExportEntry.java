@@ -25,11 +25,11 @@ import java.io.IOException;
  *
  * @author juehv
  */
-public class VaultEntryJsonExportEntry implements ExportEntry {
+public class JsonExportEntry implements ExportEntry {
 
     private final String json;
 
-    public VaultEntryJsonExportEntry(String json) {
+    public JsonExportEntry(String json) {
         this.json = json;
     }
 

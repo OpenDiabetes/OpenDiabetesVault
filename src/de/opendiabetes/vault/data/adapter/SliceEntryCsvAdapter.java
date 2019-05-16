@@ -63,7 +63,7 @@ public class SliceEntryCsvAdapter {
     public SliceEntry deserialize(final CsvExportEntry entry) {
         Date timestamp = null;
         Double duration = null;
-        LabelType vType = null;
+        LabelType label = null;
         String source = null;
 
         if (!entry.toCsvRecord()[0].isEmpty()) {
@@ -86,14 +86,14 @@ public class SliceEntryCsvAdapter {
             }
 
             if (!entry.toCsvRecord()[3].isEmpty()) {
-                vType = LabelType.valueOf(entry.toCsvRecord()[3]);
+                label = LabelType.valueOfIgnoreCase(entry.toCsvRecord()[3]);
             }
         }
 
         // build and return
         SliceEntry returnValue;
-        if (source != null || vType != null) {
-            returnValue = new LabeledSliceEntry(source, vType, timestamp, (int) Math.round(duration));
+        if (source != null || label != null) {
+            returnValue = new LabeledSliceEntry(source, label, timestamp, (int) Math.round(duration));
         } else {
             returnValue = new SliceEntry(timestamp, (int) Math.round(duration));
         }

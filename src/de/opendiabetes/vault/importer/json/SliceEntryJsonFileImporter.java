@@ -18,9 +18,9 @@ package de.opendiabetes.vault.importer.json;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import de.opendiabetes.vault.data.adapter.VaultEntryJsonAdapter;
-import de.opendiabetes.vault.data.container.VaultEntry;
-import de.opendiabetes.vault.exporter.json.VaultEntryJsonExportObject;
+import de.opendiabetes.vault.data.adapter.SliceEntryJsonAdapter;
+import de.opendiabetes.vault.data.container.SliceEntry;
+import de.opendiabetes.vault.exporter.json.SliceEntryJsonExportObject;
 import de.opendiabetes.vault.importer.FileImporter;
 import de.opendiabetes.vault.importer.ImporterOptions;
 import java.io.BufferedInputStream;
@@ -33,21 +33,21 @@ import java.util.List;
  *
  * @author juehv
  */
-public class VaultEntryJsonFileImporter extends FileImporter<VaultEntry> {
+public class SliceEntryJsonFileImporter extends FileImporter<SliceEntry> {
 
-    public VaultEntryJsonFileImporter(ImporterOptions options) {
+    public SliceEntryJsonFileImporter(ImporterOptions options) {
         super(options);
     }
 
     @Override
-    protected List<VaultEntry> processImport(InputStream fis) {
+    protected List<SliceEntry> processImport(InputStream fis) {
         InputStreamReader reader = new InputStreamReader(new BufferedInputStream(fis));
 
         GsonBuilder gb = new GsonBuilder();
-        gb.registerTypeAdapter(VaultEntry.class, new VaultEntryJsonAdapter());
+        gb.registerTypeAdapter(SliceEntry.class, new SliceEntryJsonAdapter());
 
         Gson gson = gb.create();
-        VaultEntryJsonExportObject dataContainer = gson.fromJson(reader, VaultEntryJsonExportObject.class);
+        SliceEntryJsonExportObject dataContainer = gson.fromJson(reader, SliceEntryJsonExportObject.class);
         // TODO check version compatiblity
 
         return dataContainer.data;

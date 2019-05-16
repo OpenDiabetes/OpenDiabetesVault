@@ -18,48 +18,34 @@ package de.opendiabetes.vault.exporter.json;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import de.opendiabetes.vault.data.container.VaultEntry;
-import de.opendiabetes.vault.data.adapter.VaultEntryJsonAdapter;
-import de.opendiabetes.vault.data.container.VaultEntryType;
+import de.opendiabetes.vault.data.adapter.SliceEntryJsonAdapter;
+import de.opendiabetes.vault.data.container.SliceEntry;
 import de.opendiabetes.vault.exporter.FileExporter;
 import de.opendiabetes.vault.exporter.ExportEntry;
 import de.opendiabetes.vault.exporter.ExporterOptions;
-import de.opendiabetes.vault.util.VaultEntryUtils;
+import de.opendiabetes.vault.util.SliceEntryUtils;
 import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Exporter class to export VaultEntry to Json (using VaultEntryGSONAdapter)
+ * Exporter class to export SliceEntry to Json (using SliceEntryJsonAdapter)
  *
  * @author juehv
  */
-public class VaultEntryJsonFileExporter extends FileExporter<VaultEntry> {
+public class SliceEntryJsonFileExporter extends FileExporter<SliceEntry> {
 
-    public VaultEntryJsonFileExporter(ExporterOptions options) {
-        super(options, new VaultEntryUtils());
+    public SliceEntryJsonFileExporter(ExporterOptions options) {
+        super(options, new SliceEntryUtils());
     }
 
     @Override
-    protected List<ExportEntry> prepareData(List<VaultEntry> data) {
-        // filter data if needed
-        List<VaultEntry> filteredData;
-        if (options.exportRefinedVaultEntries) {
-            filteredData = data;
-        } else {
-            filteredData = new ArrayList<>();
-            for (VaultEntry item : data) {
-                if (item.getType() != VaultEntryType.REFINED_VAULT_ENTRY) {
-                    filteredData.add(item);
-                }
-            }
-        }
-
+    protected List<ExportEntry> prepareData(List<SliceEntry> data) {
         // prepare export object
-        VaultEntryJsonExportObject export = new VaultEntryJsonExportObject(filteredData);
+        SliceEntryJsonExportObject export = new SliceEntryJsonExportObject(data);
 
         // prepare GSON exporter
         GsonBuilder gb = new GsonBuilder();
-        gb.registerTypeAdapter(VaultEntry.class, new VaultEntryJsonAdapter());
+        gb.registerTypeAdapter(SliceEntry.class, new SliceEntryJsonAdapter());
 
         Gson gson = gb.create();
         String json = gson.toJson(export);

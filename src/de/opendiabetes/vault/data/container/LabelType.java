@@ -28,5 +28,9 @@ public enum LabelType {
     BOLUS_AMOUNT_LOW,
     BOLUS_AMOUNT_HIGH,
     BOLUS_TIME_EARLY,
-    BOLUS_TIME_LATE
+    BOLUS_TIME_LATE;
+
+    public static LabelType valueOfIgnoreCase(String value) {
+        return LabelType.valueOf(value.toUpperCase());
+    }
 }

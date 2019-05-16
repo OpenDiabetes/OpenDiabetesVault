@@ -14,24 +14,27 @@
  * You should have received a copy of the GNU General Public License along with
  * this program. If not, see <http://www.gnu.org/licenses/>.
  */
-package de.opendiabetes.vault.data.container;
+package de.opendiabetes.vault.exporter.json;
 
+import de.opendiabetes.vault.data.container.SliceEntry;
 import java.io.Serializable;
 import java.util.Date;
+import java.util.List;
 
 /**
- * Container for marking dataset slices.
+ * Export container for JsonFileExporter.
  *
  * @author juehv
  */
-public class SliceEntry implements Serializable {
+public class SliceEntryJsonExportObject implements Serializable {
 
-    public final Date startTimestamp;
-    public final int durationInMinutes;
+    public final String titel = "OpenDiabetesVault SliceEntry JSON Export";
+    public final String version = "1";
+    public final String exportDate = String.format("%tF %tR", new Date(), new Date());
+    public final List<SliceEntry> data;
 
-    public SliceEntry(Date startTimestamp, int durationInMinutes) {
-        this.startTimestamp = startTimestamp;
-        this.durationInMinutes = durationInMinutes;
+    public SliceEntryJsonExportObject(List<SliceEntry> data) {
+        this.data = data;
     }
 
 }
