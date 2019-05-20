@@ -3,11 +3,11 @@ OpenDiabetesVault was developed to combine several diabetes related data sources
 This should mainly accelerate our work with artificial intelligence supported data analytics.
 
 ## Build the Project
-With the code we provide a Netbeans 8.2 project to build the code and run example code.
+Together with the code, we provide a Netbeans 8.2 project to build the program and run example code.
 However, as the project code and any dependencies are in pure java, any build system should work just fine. 
 
 ## Run the Program
-After compiling the code you can start the program by using the command:
+After compiling the program you can show the commandline help page by using the command:
 
 ```
 java -jar OpenDiabetesVault.jar -h
