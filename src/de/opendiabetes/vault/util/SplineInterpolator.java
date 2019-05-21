@@ -17,7 +17,7 @@
 package de.opendiabetes.vault.util;
 
 import java.util.List;
-import javafx.util.Pair;
+import java.util.Map;
 
 /**
  * Class for intertolating values using cubic spline.
@@ -26,7 +26,7 @@ import javafx.util.Pair;
  */
 public class SplineInterpolator {
 
-    private final List<Pair<Long, Double>> values;
+    private final List<Map.Entry<Long, Double>> values;
     private final double[] moments;
 
     /**
@@ -41,7 +41,7 @@ public class SplineInterpolator {
      *
      * @param values Pairs of x and y values. Have to be null-checked!
      */
-    public SplineInterpolator(List<Pair<Long, Double>> values) {
+    public SplineInterpolator(List<Map.Entry<Long, Double>> values) {
 
         this.values = values;
         if (values != null && values.size() >= 2) {

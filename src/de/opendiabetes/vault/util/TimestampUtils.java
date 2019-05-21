@@ -27,12 +27,13 @@ import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.TemporalAccessor;
+import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.List;
-import javafx.util.Pair;
+import java.util.Map;
 
 /**
  * Class for handling standard timestamp related problems.
@@ -280,12 +281,12 @@ public class TimestampUtils {
      * @param marginAfter margin after each timespamp
      * @return merged time series
      */
-    public static List<Pair<Date, Date>> normalizeTimeSeries(List<Pair<Date, Date>> timeSeries, int marginBefore, int marginAfter) {
-        List<Pair<Date, Date>> result = new ArrayList<>();
+    public static List<Map.Entry<Date, Date>> normalizeTimeSeries(List<Map.Entry<Date, Date>> timeSeries, int marginBefore, int marginAfter) {
+        List<Map.Entry<Date, Date>> result = new ArrayList<>();
         Date startOfCurentTimeSeries = null;
         Date lastTimeStamp = null;
         Date tempTimeStamp = null;
-        for (Pair<Date, Date> p : timeSeries) {
+        for (Map.Entry<Date, Date> p : timeSeries) {
             if (startOfCurentTimeSeries == null) {
                 //initial run of the loop
                 startOfCurentTimeSeries = TimestampUtils.addMinutesToTimestamp(p.getKey(), (long) -1 * marginBefore);
@@ -301,14 +302,14 @@ public class TimestampUtils {
                 }
             } else {
                 //if no othe time span can be merged to the current span, it will be added to the result and the next span starts
-                result.add(new Pair<>(startOfCurentTimeSeries, lastTimeStamp));
+                result.add(new AbstractMap.SimpleEntry<>(startOfCurentTimeSeries, lastTimeStamp));
                 startOfCurentTimeSeries = TimestampUtils.addMinutesToTimestamp(p.getKey(), -1 * marginBefore);
                 lastTimeStamp = TimestampUtils.addMinutesToTimestamp(p.getValue(), marginAfter);
             }
 
         }
         if (timeSeries.size() > 0) {
-            result.add(new Pair<>(startOfCurentTimeSeries, lastTimeStamp));
+            result.add(new AbstractMap.SimpleEntry<>(startOfCurentTimeSeries, lastTimeStamp));
         }
         return result;
     }
@@ -321,7 +322,7 @@ public class TimestampUtils {
      * @param margin margin before and after each timespamp
      * @return merged time series
      */
-    public static List<Pair<Date, Date>> normalizeTimeSeries(List<Pair<Date, Date>> timeSeries, int margin) {
+    public static List<Map.Entry<Date, Date>> normalizeTimeSeries(List<Map.Entry<Date, Date>> timeSeries, int margin) {
         return normalizeTimeSeries(timeSeries, margin, margin);
     }
 
@@ -339,10 +340,10 @@ public class TimestampUtils {
      * @param marginAfter margin after each timespamp
      * @return merged time series
      */
-    public static List<Pair<Date, Date>> getNormalizedTimeSeries(List<VaultEntry> data, int marginBefore, int marginAfter) {
-        List<Pair<Date, Date>> result = new ArrayList<>();
+    public static List<Map.Entry<Date, Date>> getNormalizedTimeSeries(List<VaultEntry> data, int marginBefore, int marginAfter) {
+        List<Map.Entry<Date, Date>> result = new ArrayList<>();
         for (VaultEntry vaultEntry : data) {
-            result.add(new Pair<>(vaultEntry.getTimestamp(), vaultEntry.getTimestamp()));
+            result.add(new AbstractMap.SimpleEntry<>(vaultEntry.getTimestamp(), vaultEntry.getTimestamp()));
         }
         result = normalizeTimeSeries(result, marginBefore, marginAfter);
         return result;
@@ -361,7 +362,7 @@ public class TimestampUtils {
      * @param margin margin before and after each timespamp
      * @return merged time series
      */
-    public static List<Pair<Date, Date>> getNormalizedTimeSeries(List<VaultEntry> data, int margin) {
+    public static List<Map.Entry<Date, Date>> getNormalizedTimeSeries(List<VaultEntry> data, int margin) {
         return getNormalizedTimeSeries(data, margin, margin);
     }
 
@@ -372,10 +373,10 @@ public class TimestampUtils {
      * @param date
      * @return true, if the date is within one of the timeSeries
      */
-    public static boolean withinTimeSeries(List<Pair<Date, Date>> timeSeries, Date date) {
+    public static boolean withinTimeSeries(List<Map.Entry<Date, Date>> timeSeries, Date date) {
         boolean result = false;
         if (timeSeries != null) {
-            for (Pair<Date, Date> p : timeSeries) {
+            for (Map.Entry<Date, Date> p : timeSeries) {
                 if (TimestampUtils.withinDateTimeSpan(p.getKey(), p.getValue(), date)) {
                     result = true;
                     break;

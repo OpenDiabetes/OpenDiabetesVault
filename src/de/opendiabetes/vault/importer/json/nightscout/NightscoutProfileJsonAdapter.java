@@ -25,12 +25,13 @@ import com.google.gson.JsonParseException;
 import de.opendiabetes.vault.util.TimestampUtils;
 
 import java.lang.reflect.Type;
+import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.logging.Logger;
-import javafx.util.Pair;
 
 /**
  * This class implements a JSON serializer for GSON based VaultEntries.
@@ -67,14 +68,14 @@ public class NightscoutProfileJsonAdapter implements JsonDeserializer<Nightscout
                     JsonObject profile = profileStore.get(item).getAsJsonObject();
                     if (profile.get("basal") != null) {
                         // iterate basal time steps to create incomplete profile
-                        List<Pair<Integer, Double>> profileTimeSteps = new ArrayList<>();
+                        List<Map.Entry<Integer, Double>> profileTimeSteps = new ArrayList<>();
                         Iterator<JsonElement> basalIter = profile.get("basal").getAsJsonArray().iterator();
                         while (basalIter.hasNext()) {
                             JsonObject basalTimeStep = basalIter.next().getAsJsonObject();
                             if (basalTimeStep.get("timeAsSeconds") != null && basalTimeStep.get("timeAsSeconds") != null) {
                                 int startSeconds = basalTimeStep.get("timeAsSeconds").getAsInt();
                                 double value = basalTimeStep.get("value").getAsDouble();
-                                profileTimeSteps.add(new Pair<>(startSeconds, value));
+                                profileTimeSteps.add(new AbstractMap.SimpleEntry<>(startSeconds, value));
                             }
                         }
 

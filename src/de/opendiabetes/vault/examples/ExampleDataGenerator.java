@@ -25,7 +25,6 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Random;
-import javafx.scene.control.Labeled;
 
 /**
  * Generator for random example data (does not reflect real data but is used to
@@ -35,7 +34,7 @@ import javafx.scene.control.Labeled;
  */
 public class ExampleDataGenerator {
 
-    private static final String[] allowedTypes = {"BOLUS_NORMAL", "BASAL_PROFILE", "GLUCOSE_CGM"};
+    private static final String[] ALLOWED_TYPES = {"BOLUS_NORMAL", "BASAL_PROFILE", "GLUCOSE_CGM"};
 
     public static List<VaultEntry> generateVaultEntries(int noOfEntries) {
         Random random = new Random();
@@ -43,9 +42,9 @@ public class ExampleDataGenerator {
         ArrayList<VaultEntry> entries = new ArrayList<>();
 
         for (int i = 0; i < noOfEntries; i++) {
-            int randomType = random.nextInt(allowedTypes.length);
+            int randomType = random.nextInt(ALLOWED_TYPES.length);
             VaultEntry tmpEntry = new VaultEntry("Random_Generator", "Example_Code",
-                    VaultEntryType.valueOfIgnoreCase(allowedTypes[randomType]),
+                    VaultEntryType.valueOfIgnoreCase(ALLOWED_TYPES[randomType]),
                     TimestampUtils.addMinutesToTimestamp(timestamp, i),
                     random.nextDouble() * 100);
             entries.add(tmpEntry);

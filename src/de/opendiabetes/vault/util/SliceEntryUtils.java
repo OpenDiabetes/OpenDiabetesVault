@@ -6,7 +6,6 @@
 package de.opendiabetes.vault.util;
 
 import de.opendiabetes.vault.data.container.SliceEntry;
-import de.opendiabetes.vault.data.container.VaultEntry;
 import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;

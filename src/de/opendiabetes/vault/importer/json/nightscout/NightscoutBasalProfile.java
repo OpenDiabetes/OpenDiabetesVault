@@ -21,9 +21,9 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import javafx.util.Pair;
 
 /**
  * Container Object for a Nightscout basal Profile
@@ -43,7 +43,7 @@ public class NightscoutBasalProfile {
         }
     }
 
-    public static NightscoutBasalProfile fromIncompleteList(List<Pair<Integer, Double>> incompleteBasalProfile) {
+    public static NightscoutBasalProfile fromIncompleteList(List<Map.Entry<Integer, Double>> incompleteBasalProfile) {
         if (incompleteBasalProfile == null || incompleteBasalProfile.isEmpty()) {
             return null;
         }
@@ -51,9 +51,9 @@ public class NightscoutBasalProfile {
         List< Double> completeBasalProfile = new ArrayList<>();
 
         // sort input data
-        incompleteBasalProfile.sort(new Comparator<Pair<Integer, Double>>() {
+        incompleteBasalProfile.sort(new Comparator<Map.Entry<Integer, Double>>() {
             @Override
-            public int compare(Pair<Integer, Double> o1, Pair<Integer, Double> o2) {
+            public int compare(Map.Entry<Integer, Double> o1, Map.Entry<Integer, Double> o2) {
                 return o1.getKey().compareTo(o2.getKey());
             }
         });
@@ -61,9 +61,9 @@ public class NightscoutBasalProfile {
         // create complete profile
         int lastTimeStep = 0;
         for (int nextTimeStep = 3600; nextTimeStep <= 86400; nextTimeStep += 3600) {
-            List<Pair<Integer, Double>> tmpEntries = new ArrayList<>();
+            List<Map.Entry<Integer, Double>> tmpEntries = new ArrayList<>();
             // find entires for this time step
-            for (Pair<Integer, Double> item : incompleteBasalProfile) {
+            for (Map.Entry<Integer, Double> item : incompleteBasalProfile) {
                 if (lastTimeStep <= item.getKey() && item.getKey() < nextTimeStep) {
                     tmpEntries.add(item);
                 } else if (item.getKey() >= nextTimeStep) {
@@ -88,7 +88,7 @@ public class NightscoutBasalProfile {
             } else {
                 // found more than one entry --> patient should go to some training ... but anyway, we'll calculate an avg
                 double avgValue = 0;
-                for (Pair<Integer, Double> item : tmpEntries) {
+                for (Map.Entry<Integer, Double> item : tmpEntries) {
                     avgValue += item.getValue();
                 }
                 avgValue /= tmpEntries.size();

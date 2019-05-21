@@ -29,12 +29,13 @@ import de.opendiabetes.vault.util.VaultEntryUtils;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
+import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.logging.Level;
-import javafx.util.Pair;
 
 /**
  * Imports JSON objects from a Nightscout server as {@link VaultEntry}s.
@@ -142,10 +143,10 @@ public class NightscoutImporter extends FileImporter {
 
         // check for big gaps (4 hours)
         Date lastTimestamp = startDate;
-        List<Pair<Date, Date>> gaps = new ArrayList<>();
+        List<Map.Entry<Date, Date>> gaps = new ArrayList<>();
         for (VaultEntry item : entries) {
             if (!TimestampUtils.gapSmallerThan(lastTimestamp, item.getTimestamp(), 240)) {
-                gaps.add(new Pair<>(lastTimestamp, item.getTimestamp()));
+                gaps.add(new AbstractMap.SimpleEntry<>(lastTimestamp, item.getTimestamp()));
             }
             lastTimestamp = item.getTimestamp();
         }
@@ -154,10 +155,10 @@ public class NightscoutImporter extends FileImporter {
         Date generateFrom = startDate;
         Date generateTo;
         ArrayList<VaultEntry> basalProfileEntries = new ArrayList<>();
-        Iterator<Pair<Date, Date>> iter = gaps.iterator();
+        Iterator<Map.Entry<Date, Date>> iter = gaps.iterator();
         while (iter.hasNext()) {
             // generate for this sub path
-            Pair<Date, Date> gap = iter.next();
+            Map.Entry<Date, Date> gap = iter.next();
             generateTo = gap.getKey();
 
             basalProfileEntries.addAll(generateBasalEntries(generateFrom, generateTo));

@@ -16,8 +16,6 @@
  */
 package de.opendiabetes.vault.exporter;
 
-import de.opendiabetes.vault.data.container.VaultEntry;
-import de.opendiabetes.vault.util.VaultEntryUtils;
 import java.io.BufferedWriter;
 
 import java.io.File;

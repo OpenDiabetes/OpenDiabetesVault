@@ -18,13 +18,10 @@ package de.opendiabetes.vault.examples;
 
 import de.opendiabetes.vault.data.container.LabeledSliceEntry;
 import de.opendiabetes.vault.data.container.SliceEntry;
-import de.opendiabetes.vault.data.container.VaultEntry;
 import de.opendiabetes.vault.exporter.ExporterOptions;
 import de.opendiabetes.vault.exporter.csv.SliceEntryCsvFileExporter;
-import de.opendiabetes.vault.exporter.csv.VaultEntryCsvFileExporter;
 import de.opendiabetes.vault.importer.ImporterOptions;
 import de.opendiabetes.vault.importer.csv.SliceEntryCsvFileImporter;
-import de.opendiabetes.vault.importer.csv.VaultEntryCsvFileImporter;
 import java.io.File;
 import java.io.IOException;
 import java.util.List;
