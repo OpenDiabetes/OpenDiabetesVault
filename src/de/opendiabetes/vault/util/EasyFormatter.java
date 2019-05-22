@@ -18,6 +18,11 @@ package de.opendiabetes.vault.util;
 
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.time.Instant;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
+import java.time.temporal.TemporalAccessor;
 import java.util.Date;
 import java.util.Locale;
 import java.util.TimeZone;
@@ -51,9 +56,10 @@ public class EasyFormatter {
     }
 
     public static String formatTimestampToIso8601(Date timestamp) {
-        TimeZone tz = TimeZone.getTimeZone("UTC");
-        DateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm'Z'"); // Quoted "Z" to indicate UTC, no timezone offset
-        df.setTimeZone(tz);
-        return df.format(new Date());
+        return DateTimeFormatter.ISO_OFFSET_DATE_TIME.format(
+                ZonedDateTime.ofInstant(
+                        Instant.ofEpochMilli(TimestampUtils
+                                .createCleanTimestamp(timestamp).getTime()),
+                        ZoneId.systemDefault()));
     }
 }

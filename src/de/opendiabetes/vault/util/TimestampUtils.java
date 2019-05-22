@@ -131,8 +131,7 @@ public class TimestampUtils {
      * milliseconds set to zero
      */
     public static Date fromIso8601DateString(String iso8601DateString) {
-        TemporalAccessor t;
-        t = DateTimeFormatter.ISO_DATE_TIME.parse(iso8601DateString);
+        TemporalAccessor t = DateTimeFormatter.ISO_DATE_TIME.parse(iso8601DateString);
         // dates are automatically converted to local time by the toInstant() method of ZonedDateTime
         Date date = Date.from(ZonedDateTime.from(t).toInstant());
         return TimestampUtils.createCleanTimestamp(date);
@@ -145,6 +144,10 @@ public class TimestampUtils {
 
     public static LocalDate dateToLocalDate(Date inputDate) {
         return LocalDateTime.ofInstant(Instant.ofEpochMilli(inputDate.getTime()), ZoneId.systemDefault()).toLocalDate();
+    }
+
+    public static LocalDateTime dateToLocalDateTime(Date inputDate) {
+        return LocalDateTime.ofInstant(Instant.ofEpochMilli(inputDate.getTime()), ZoneId.systemDefault());
     }
 
     public static Date fromLocalDate(LocalDate inputDate, long offestInMilliseconds) {
