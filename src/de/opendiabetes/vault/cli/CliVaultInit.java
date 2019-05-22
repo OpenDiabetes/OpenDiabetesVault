@@ -31,8 +31,8 @@ import picocli.CommandLine;
  *
  * @author juehv
  */
-@CommandLine.Command(description = "Initializes the OpenDiabes Vault repository",
-        name = "odv init", mixinStandardHelpOptions = true, version = "odv init 0.1")
+@CommandLine.Command(description = "Initializes the OpenDiabes Vault repository.",
+        name = "init", mixinStandardHelpOptions = true, version = "odv init 0.1")
 public class CliVaultInit implements Callable<Void> {
 
     private static final Logger LOG = Logger.getLogger(CliVaultInit.class.getName());

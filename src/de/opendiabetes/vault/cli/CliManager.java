@@ -41,10 +41,12 @@ public class CliManager implements Callable<Void> {
 
         CommandLine commandLine = new CommandLine(new CliManager());
 
-        commandLine.addSubcommand("import", new CliVaultImport())
+        commandLine.addSubcommand("init", new CliVaultInit())
+                .addSubcommand("import", new CliVaultImport())
                 .addSubcommand("export", new CliVaultExport())
-                .addSubcommand("journal", new CliJournal())
-                .addSubcommand("init", new CliVaultInit());
+                .addSubcommand("tag", new CliTag())
+                .addSubcommand("process", new CliProcessing())
+                .addSubcommand(CliStatus.COMMAND, new CliStatus());
 
         List<Object> result = commandLine.parseWithHandler(new CommandLine.RunAll(), args);
     }

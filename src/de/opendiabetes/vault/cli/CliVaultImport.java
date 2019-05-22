@@ -39,8 +39,8 @@ import picocli.CommandLine;
  *
  * @author juehv
  */
-@CommandLine.Command(description = "Imports data into the OpenDiabes Vault repository",
-        name = "odv import", mixinStandardHelpOptions = true, version = "odv import 0.1")
+@CommandLine.Command(description = "Imports data into the OpenDiabes Vault repository.",
+        name = "import", mixinStandardHelpOptions = true, version = "odv import 0.1")
 public class CliVaultImport implements Callable<Void> {
 
     private static final Logger LOG = Logger.getLogger(CliVaultImport.class.getName());
@@ -135,7 +135,7 @@ public class CliVaultImport implements Callable<Void> {
 
         if (!importData.isEmpty()) {
             repMan.writeLineToJournal("Import successful");
-            repMan.mergeDataToRepository(importData);
+            repMan.mergeDataIntoRepository(importData);
             repMan.addFilesToImportFolder(filteredImportFiles);
             repMan.writeLineToJournal("Import files backuped");
         }

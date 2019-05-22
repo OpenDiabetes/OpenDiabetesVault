@@ -34,17 +34,19 @@ import picocli.CommandLine;
  *
  * @author juehv
  */
-@CommandLine.Command(description = "Exports data from the OpenDiabes Vault repository",
-        name = "odv export", mixinStandardHelpOptions = true, version = "odv export 0.1")
+@CommandLine.Command(description = "Exports data from the OpenDiabes Vault repository.",
+        name = "export", mixinStandardHelpOptions = true, version = "odv export 0.1")
 public class CliVaultExport implements Callable<Void> {
+
+    public static final String COMMAND = "export";
 
     private static final Logger LOG = Logger.getLogger(CliVaultExport.class.getName());
 
     @CommandLine.Option(names = {"-t", "--type"}, description = "Exporter Type. Valid values: ${COMPLETION-CANDIDATES}")
     private CliExportType exportType;
 
-    @CommandLine.Option(names = {"-a", "--all"}, description = "Export all available data. Overrides state tags.")
-    private boolean allData;
+    @CommandLine.Option(names = {"-t", "--tag"}, description = "Exports data of respective tag. Exports complete data if not set.")
+    private String tag;
 
     @CommandLine.Option(names = {"-c", "--compress"}, description = "Activates compression.")
     private boolean deflate;
@@ -55,9 +57,17 @@ public class CliVaultExport implements Callable<Void> {
         List<VaultEntry> exportData = null;
         CliRepositoryManager repMan = CliRepositoryManager.getCurrentRepository();
         if (repMan != null) {
-            if (allData) {
-                exportData = repMan.getAllRepositoryData();
-            } // TODO state tag management
+            if (tag != null && !tag.isEmpty()) {
+                if (repMan.getTagNameList().contains(tag)) {
+                    exportData = repMan.getDateFromTag(tag);
+                } else {
+                    System.err.println("Tag not found. Exit.");
+                    System.exit(-1);
+                }
+            }
+        } else {
+            // export all data
+            exportData = repMan.getCompleteData();
         }
 
         if (exportData == null) {
@@ -65,7 +75,7 @@ public class CliVaultExport implements Callable<Void> {
         }
 
         // export data
-        FileExporter exporter = null;
+        FileExporter exporter;
         switch (exportType) {
             case ODV_CSV:
                 exporter = new VaultEntryCsvFileExporter(new ExporterOptions());

@@ -14,6 +14,6 @@ import java.util.List;
  * @author juehv
  */
 public interface ProcessingContainer {
-    
-   List<List<VaultEntry>> processData(List<VaultEntry> inputData);
+
+    List<List<VaultEntry>> processData(List<List<VaultEntry>> inputData);
 }

@@ -25,24 +25,21 @@ import picocli.CommandLine;
  *
  * @author juehv
  */
-@CommandLine.Command(description = "Manages repository journal",
-        name = "odv journal", mixinStandardHelpOptions = true, version = "odv journal 0.1")
-public class CliJournal implements Callable<Void> {
+@CommandLine.Command(description = "Manages repository journal.",
+        name = "status", mixinStandardHelpOptions = true, version = "odv status 0.1")
+public class CliStatus implements Callable<Void> {
 
-    @CommandLine.Option(names = "print", paramLabel="NOTE", description = "Prints the complete journal.")
-    private boolean printOption;
+    public static final String COMMAND = "status";
 
-    @CommandLine.Parameters(defaultValue = "", index = "0", description = "Adds a note to the journal.")
+    @CommandLine.Option(names = {"-n", "--add-note"}, paramLabel = "NOTE", description = "Adds a note to the journal.")
     private String note;
 
     @Override
     public Void call() throws Exception {
-        if (printOption) {
-            printJournal();
-        } else if (!note.isEmpty()) {
+        if (note != null && !note.isEmpty()) {
             addNoteToJournal();
         } else {
-            // print -h
+            printJournal();
         }
 
         return null;
@@ -52,17 +49,16 @@ public class CliJournal implements Callable<Void> {
         CliRepositoryManager repMan = CliRepositoryManager.getCurrentRepository();
         if (repMan != null) {
             System.out.println(repMan.readJournal());
+            repMan.closeJournal();
         }
-        repMan.closeJournal();
     }
 
     private void addNoteToJournal() throws IOException {
         CliRepositoryManager repMan = CliRepositoryManager.getCurrentRepository();
-
         if (repMan != null) {
             repMan.writeLineToJournal("NOTE: " + note);
+            repMan.closeJournal();
         }
-        repMan.closeJournal();
     }
 
 }

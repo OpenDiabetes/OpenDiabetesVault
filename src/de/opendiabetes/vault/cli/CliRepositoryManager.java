@@ -26,15 +26,22 @@ import de.opendiabetes.vault.util.EasyFormatter;
 import de.opendiabetes.vault.util.VaultEntryUtils;
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileFilter;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
+import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -42,30 +49,33 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
 /**
- * Class to manage data repository.
+ * Class to manage data-set repository.
  *
  * @author juehv
  */
 public class CliRepositoryManager {
 
     private static CliRepositoryManager INSTANCE;
+    public static final String COMPLETE_DATA = "all";
 
     private static final Logger LOG = Logger.getLogger(CliVaultInit.class.getName());
     public static final String DIR_VAULT = ".vault";
-    public static final String DIR_IMPORT = "import";
+    public static final String DIR_IMPORT = "importBackup";
     public static final String DIR_EXPORT = "export";
     public static final String FILE_JOURNAL = "journal.txt";
     public static final String FILE_DATA = "data.json.gz";
     public static final String REPOSITORY_VERSION = "0.1";
 
     private final FileWriter journalWriter;
+    private final File vaultDir;
     private final File importDir;
     private final File exportDir;
     private final File journalFile;
     private final File dataFile;
 
-    private CliRepositoryManager(File importDir, File exportDir, File journalFile, File dataFile) throws IOException {
+    private CliRepositoryManager(File vaultDir, File importDir, File exportDir, File journalFile, File dataFile) throws IOException {
         this.journalWriter = new FileWriter(journalFile, true);
+        this.vaultDir = vaultDir;
         this.importDir = importDir;
         this.exportDir = exportDir;
         this.journalFile = journalFile;
@@ -111,7 +121,7 @@ public class CliRepositoryManager {
 
         // create config file and data file
         try {
-            INSTANCE = new CliRepositoryManager(importDir, exportDir,
+            INSTANCE = new CliRepositoryManager(vaultDir, importDir, exportDir,
                     journalFile, dataFile);
 
             INSTANCE.writeLineToJournal("OpenDiabetes Vault Repository Journal");
@@ -149,9 +159,14 @@ public class CliRepositoryManager {
                 return null;
             }
 
+            if (!vaultDir.isDirectory() || !importDir.isDirectory() || !exportDir.isDirectory()) {
+                LOG.severe("Some directories are corrupted.");
+                return null;
+            }
+
             // create journal writer and object
             try {
-                INSTANCE = new CliRepositoryManager(importDir, exportDir,
+                INSTANCE = new CliRepositoryManager(vaultDir, importDir, exportDir,
                         journalFile, dataFile);
             } catch (IOException ex) {
                 LOG.log(Level.SEVERE, "Error writing journal file.", ex);
@@ -190,10 +205,10 @@ public class CliRepositoryManager {
         journalWriter.close();
     }
 
-    public void mergeDataToRepository(List<VaultEntry> data) throws IllegalAccessException {
+    public void mergeDataIntoRepository(List<VaultEntry> data) throws IllegalAccessException {
         LOG.info("Merge data to repository.");
         // read old dataset
-        List<VaultEntry> entries = getAllRepositoryData();
+        List<VaultEntry> entries = getCompleteData();
 
         // merge data
         entries.addAll(data);
@@ -206,12 +221,30 @@ public class CliRepositoryManager {
         exporter.exportDataToFile(dataFile.getAbsolutePath(), entries, true);
     }
 
-    public List<VaultEntry> getAllRepositoryData() throws IllegalAccessException {
+    public List<VaultEntry> getCompleteData() throws IllegalAccessException {
         LOG.info("Read complete repository.");
         List<VaultEntry> entries = new ArrayList<>();
         if (dataFile.exists() && dataFile.length() > 0) {
             VaultEntryJsonFileImporter importer = new VaultEntryJsonFileImporter(new ImporterOptions());
             entries.addAll(importer.importDataFromFile(dataFile.getAbsolutePath()));
+        }
+        return entries;
+    }
+    
+
+    List<VaultEntry> getDateFromTag(String input) throws IllegalAccessException {
+        LOG.info("Read tag repository");
+        
+        File tagFile = new File(vaultDir.getAbsolutePath().concat(File.separator).concat(input).concat(".tag.gz"));
+        if (!tagFile.exists() || !tagFile.canRead()){
+            LOG.log(Level.SEVERE, "Can''t read tag file: {0}", tagFile.getName());
+            return null;
+        }
+        
+        List<VaultEntry> entries = new ArrayList<>();
+        if (tagFile.length() > 0) {
+            VaultEntryJsonFileImporter importer = new VaultEntryJsonFileImporter(new ImporterOptions());
+            entries.addAll(importer.importDataFromFile(tagFile.getAbsolutePath()));
         }
         return entries;
     }
@@ -261,6 +294,90 @@ public class CliRepositoryManager {
         return targetFile;
     }
 
+    public List<Map.Entry<String, Date>> getTagList() {
+        LOG.info("Read tag list.");
+        File[] tagFiles = vaultDir.listFiles(new FileFilter() {
+            @Override
+            public boolean accept(File pathname) {
+                String nameOfFile = pathname.getName();
+                return (nameOfFile != null && !nameOfFile.isEmpty() && nameOfFile.endsWith(".tag.gz"));
+            }
+        });
+
+        List<Map.Entry<String, Date>> returnValue = new ArrayList<>();
+        for (File item : tagFiles) {
+            returnValue.add(new AbstractMap.SimpleEntry<>(
+                    item.getName().substring(0, item.getName().indexOf(".tag.gz")),
+                    new Date(item.lastModified())));
+        }
+        return returnValue;
+    }
+
+    public List<String> getTagNameList() {
+        LOG.info("Read tag list.");
+        File[] tagFiles = vaultDir.listFiles(new FileFilter() {
+            @Override
+            public boolean accept(File pathname) {
+                String nameOfFile = pathname.getName();
+                return (nameOfFile != null && !nameOfFile.isEmpty() && nameOfFile.endsWith(".tag.gz"));
+            }
+        });
+
+        List<String> returnValue = new ArrayList<>();
+        for (File item : tagFiles) {
+            returnValue.add(
+                    item.getName().substring(0, item.getName().indexOf(".tag.gz")));
+        }
+        return returnValue;
+    }
+
+    public void createTagFromData(List<VaultEntry> data, String targetTag) {
+        File targetFile = new File(vaultDir.getAbsolutePath()
+                .concat(File.separator).concat(targetTag).concat(".tag.gz"));
+
+        // sanity jobs
+        data = VaultEntryUtils.removeDublicates(data);
+        data.sort(new VaultEntryUtils());
+
+        // write new dataset
+        VaultEntryJsonFileExporter exporter = new VaultEntryJsonFileExporter(new ExporterOptions());
+        exporter.exportDataToFile(targetFile.getAbsolutePath(), data, true);
+    }
+
+    public void copyTag(String sourceTag, String targetTag) throws IOException {
+        LOG.log(Level.INFO, "search for source tag: {0}", sourceTag);
+        File sourceFile;
+        if (sourceTag.equalsIgnoreCase(COMPLETE_DATA)) {
+            sourceFile = dataFile;
+        } else {
+            sourceFile = new File(vaultDir.getAbsolutePath()
+                    .concat(File.separator).concat(sourceTag).concat(".tag.gz"));
+        }
+        File targetFile = new File(vaultDir.getAbsolutePath()
+                .concat(File.separator).concat(targetTag).concat(".tag.gz"));
+        if (sourceFile.exists() && sourceFile.canRead()) {
+            Path copyPath = Paths.get(targetFile.getAbsolutePath());
+            Path originalPath = Paths.get(sourceFile.getAbsolutePath());
+            Files.copy(originalPath, copyPath, StandardCopyOption.REPLACE_EXISTING);
+            LOG.info("Tag copy successful.");
+            writeLineToJournal("Tag \"" + targetTag
+                    + "\" successfully created from \"" + sourceTag + "\".");
+        } else {
+            LOG.warning("Can't read source file.");
+        }
+    }
+
+    public void removeTag(String remove) throws IOException {
+        File removeTag = new File(vaultDir.getAbsolutePath()
+                .concat(File.separator).concat(remove).concat(".tag.gz"));
+        if (removeTag.exists()) {
+            removeTag.delete();
+            LOG.log(Level.INFO, "Removed tag \"{0}\" successfully.", remove);
+            writeLineToJournal("Removed tag \"" + remove + "\" successfully.");
+        } else {
+            LOG.log(Level.WARNING, "Could not find tag \"{0}\" to remove.", remove);
+        }
+    }
 }
 
 // TODO make threadsafe(er) with lock file
