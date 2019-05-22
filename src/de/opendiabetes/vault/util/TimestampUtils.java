@@ -146,10 +146,6 @@ public class TimestampUtils {
         return LocalDateTime.ofInstant(Instant.ofEpochMilli(inputDate.getTime()), ZoneId.systemDefault()).toLocalDate();
     }
 
-    public static LocalDateTime dateToLocalDateTime(Date inputDate) {
-        return LocalDateTime.ofInstant(Instant.ofEpochMilli(inputDate.getTime()), ZoneId.systemDefault());
-    }
-
     public static Date fromLocalDate(LocalDate inputDate, long offestInMilliseconds) {
         Date tmpInputDate = Date.from(Instant.from(inputDate
                 .atStartOfDay(ZoneId.systemDefault())));

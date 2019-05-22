@@ -34,27 +34,36 @@ public class ImportExportCsvExample {
 
     static final String csvFilePath = System.getProperty("user.home") + "/example.csv";
 
-    public static void exportCsv() {
-        // create some example data
-        List<VaultEntry> entries = ExampleDataGenerator.generateVaultEntries(1000);
+    public static void exportCsv(List<VaultEntry> entries) {
 
         // export
         VaultEntryCsvFileExporter exporter = new VaultEntryCsvFileExporter(new ExporterOptions());
         exporter.exportDataToFile(csvFilePath, entries, false);
+        System.out.println(entries.size() + " entries exported.");
     }
 
-    public static void importCsv() throws IllegalAccessException {
+    public static List<VaultEntry> importCsv() throws IllegalAccessException {
         VaultEntryCsvFileImporter importer = new VaultEntryCsvFileImporter(new ImporterOptions());
         List<VaultEntry> entries = importer.importDataFromFile(csvFilePath);
-        System.out.println("Imported " + entries.size() + " Entries!");
+        System.out.println("Imported " + entries.size() + " entries!");
+        return entries;
     }
 
     /**
      * @param args the command line arguments
      */
     public static void main(String[] args) throws IOException, IllegalAccessException {
-        exportCsv();
-        importCsv();
+        // create some example data
+        List<VaultEntry> entries = ExampleDataGenerator.generateVaultEntries(1000);
+        exportCsv(entries);
+        List<VaultEntry> importedEntries = importCsv();
+
+        // check entries
+        if (entries.equals(importedEntries)) {
+            System.out.println("Entries equal.");
+        } else {
+            System.err.println("Entries NOT equal!!!");
+        }
 
         System.out.println("Delete example file at:" + csvFilePath + " ? (y/n)");
         char key = (char) System.in.read();
