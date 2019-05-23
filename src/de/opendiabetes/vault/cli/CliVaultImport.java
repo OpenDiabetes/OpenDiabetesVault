@@ -17,7 +17,6 @@
 package de.opendiabetes.vault.cli;
 
 import de.opendiabetes.vault.data.container.VaultEntry;
-import de.opendiabetes.vault.importer.FileImporter;
 import de.opendiabetes.vault.importer.ImporterOptions;
 import de.opendiabetes.vault.importer.csv.VaultEntryCsvFileImporter;
 import de.opendiabetes.vault.importer.json.nightscout.NightscoutImporter;

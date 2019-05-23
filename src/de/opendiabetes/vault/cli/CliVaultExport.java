@@ -21,8 +21,6 @@ import de.opendiabetes.vault.exporter.ExporterOptions;
 import de.opendiabetes.vault.exporter.FileExporter;
 import de.opendiabetes.vault.exporter.csv.VaultEntryCsvFileExporter;
 import de.opendiabetes.vault.exporter.json.VaultEntryJsonFileExporter;
-import java.io.File;
-import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.Callable;
 import picocli.CommandLine;
