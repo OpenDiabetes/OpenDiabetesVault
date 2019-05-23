@@ -98,7 +98,7 @@ public class TimestampUtils {
         return timestamp;
     }
 
-    public static boolean gapSmallerThan(Date timestampOne, Date timestampTwo, int gapSizeInMinutes) {
+    public static boolean isGapSmallerThan(Date timestampOne, Date timestampTwo, int gapSizeInMinutes) {
         long gapMillies = Math.abs(timestampOne.getTime() - timestampTwo.getTime());
         int gapMinutes = (int) gapMillies / 60000;
         return gapSizeInMinutes > gapMinutes;
@@ -395,5 +395,13 @@ public class TimestampUtils {
      */
     public static Date copyTimestamp(final Date date) {
         return new Date(date.getTime());
+    }
+
+    public static int getDurationInMinutes(Date start, Date stop) {
+        return (int) (getDurationInSeconds(start, stop) / 60);
+    }
+
+    public static int getDurationInSeconds(Date start, Date stop) {
+        return (int) ((stop.getTime() - start.getTime()) / 1000);
     }
 }

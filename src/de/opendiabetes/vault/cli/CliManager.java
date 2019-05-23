@@ -16,9 +16,7 @@
  */
 package de.opendiabetes.vault.cli;
 
-import java.util.List;
 import java.util.concurrent.Callable;
-import java.util.logging.Level;
 import java.util.logging.Logger;
 import picocli.CommandLine;
 
@@ -28,35 +26,51 @@ import picocli.CommandLine;
  * @author juehv
  */
 @CommandLine.Command(description = "OpenDiabetesVault Commandline Interface. Manages a git-like data vault for diabetes data processing.",
-        name = "odv", mixinStandardHelpOptions = true, version = "odv 0.1")
+        name = "odv", mixinStandardHelpOptions = true, version = "odv 0.1",
+        subcommands = {CliVaultInit.class, CliVaultImport.class, CliVaultExport.class,
+            CliVaultTag.class, CliProcessing.class, CliVaultStatus.class})
 public class CliManager implements Callable<Void> {
 
-//    @CommandLine.Parameters(index = "0", description = "The file whose checksum to calculate.")
-//    private File file;
-//
-//    @CommandLine.Option(names = {"-a", "--algorithm"}, description = "MD5, SHA-1, SHA-256, ...")
-//    private String algorithm = "SHA-1";
-    public static void main(String[] args) throws Exception {
-        LOG.setLevel(Level.WARNING);
-
-        CommandLine commandLine = new CommandLine(new CliManager());
-
-        commandLine.addSubcommand("init", new CliVaultInit())
-                .addSubcommand("import", new CliVaultImport())
-                .addSubcommand("export", new CliVaultExport())
-                .addSubcommand("tag", new CliTag())
-                .addSubcommand("process", new CliProcessing())
-                .addSubcommand(CliStatus.COMMAND, new CliStatus());
-
-        List<Object> result = commandLine.parseWithHandler(new CommandLine.RunAll(), args);
-    }
     private static final Logger LOG = Logger.getLogger(CliManager.class.getName());
+
+    public static void main(String[] args) throws Exception {
+        CommandLine commandLine = new CommandLine(new CliManager());
+        commandLine.parseWithHandler(new CommandLine.RunLast(), args);
+    }
 
     @Override
     public Void call() throws Exception {
-//        byte[] fileContents = Files.readAllBytes(file.toPath());
-//        byte[] digest = MessageDigest.getInstance(algorithm).digest(fileContents);
-//        System.out.println(javax.xml.bind.DatatypeConverter.printHexBinary(digest));
+        // user should never end here.
+        new CommandLine(this).usage(System.err);
+
         return null;
+    }
+
+    /**
+     * Helper function to open current repository.
+     *
+     * @return Reposiory or exits if not possible to open.
+     */
+    static CliRepositoryManager openRepository() {
+        CliRepositoryManager repMan = CliRepositoryManager.getCurrentRepository();
+        if (repMan == null) {
+            System.err.println("Not an Opendiabetes Vault repository. Exit.");
+            System.exit(-1);
+        }
+        return repMan;
+    }
+
+    /**
+     * Helper function to exit commandline program with an user message.
+     *
+     * @param msg Message to user.
+     * @param repMan Repository handle.
+     */
+    static void exitWithError(String msg, CliRepositoryManager repMan) {
+        if (repMan != null) {
+            repMan.closeJournal();
+        }
+        System.err.println(msg);
+        System.exit(-1);
     }
 }

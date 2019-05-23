@@ -25,8 +25,6 @@ import java.io.File;
 import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.Callable;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import picocli.CommandLine;
 
 /**
@@ -38,14 +36,12 @@ import picocli.CommandLine;
         name = "export", mixinStandardHelpOptions = true, version = "odv export 0.1")
 public class CliVaultExport implements Callable<Void> {
 
-    public static final String COMMAND = "export";
-
-    private static final Logger LOG = Logger.getLogger(CliVaultExport.class.getName());
-
-    @CommandLine.Option(names = {"-t", "--type"}, description = "Exporter Type. Valid values: ${COMPLETION-CANDIDATES}")
+    @CommandLine.Option(required = true, names = {"-t", "--type"}, paramLabel = "EXPORT-TYPE",
+            description = "Exporter Type. Valid values: ${COMPLETION-CANDIDATES}")
     private CliExportType exportType;
 
-    @CommandLine.Option(names = {"-t", "--tag"}, description = "Exports data of respective tag. Exports complete data if not set.")
+    @CommandLine.Option(names = {"-i", "--input-tag"}, paramLabel = "INPUT-TAG",
+            description = "Exports data of respective tag. Exports complete data if not set.")
     private String tag;
 
     @CommandLine.Option(names = {"-c", "--compress"}, description = "Activates compression.")
@@ -53,57 +49,53 @@ public class CliVaultExport implements Callable<Void> {
 
     @Override
     public Void call() throws Exception {
+        CliRepositoryManager repMan = CliManager.openRepository();
+
         // gather data
         List<VaultEntry> exportData = null;
-        CliRepositoryManager repMan = CliRepositoryManager.getCurrentRepository();
-        if (repMan != null) {
-            if (tag != null && !tag.isEmpty()) {
-                if (repMan.getTagNameList().contains(tag)) {
-                    exportData = repMan.getDateFromTag(tag);
-                } else {
-                    System.err.println("Tag not found. Exit.");
-                    System.exit(-1);
-                }
+        if (tag != null && !tag.isEmpty()) {
+            // export from tag
+            if (repMan.getTagNameList().contains(tag)) {
+                exportData = repMan.getDateFromTag(tag);
+            } else {
+                CliManager.exitWithError("Tag not found. Exit.", repMan);
             }
         } else {
-            // export all data
+            // export complete data
             exportData = repMan.getCompleteData();
         }
 
         if (exportData == null) {
-            LOG.severe("No data for export found.");
+            CliManager.exitWithError("No data for export found. Exit.", repMan);
         }
 
         // export data
         FileExporter exporter;
+        String exportName = null;
         switch (exportType) {
             case ODV_CSV:
                 exporter = new VaultEntryCsvFileExporter(new ExporterOptions());
-                exportToFile(repMan, exporter, exportData);
+                exportName = repMan.exportDataToFile(exportData, exporter, deflate);
                 break;
             case ODV_JSON:
                 exporter = new VaultEntryJsonFileExporter(new ExporterOptions());
-                exportToFile(repMan, exporter, exportData);
+                exportName = repMan.exportDataToFile(exportData, exporter, deflate);
                 break;
             case CUSTOM_CSV:
-                LOG.severe("not supported yet");
-                System.exit(-1);
+                CliManager.exitWithError("Not supported yet. Exit.", repMan);
                 break;
             default:
                 throw new AssertionError("PROGRAMMING ERROR: Missing case for this type!");
         }
 
+        if (exportName != null && !exportName.isEmpty()) {
+            System.out.println("Export to file: " + exportName);
+            System.out.println("Finished successfully.");
+        } else {
+            CliManager.exitWithError("Error while exporting data. See log.", repMan);
+        }
+        repMan.closeJournal();
         return null;
-    }
-
-    private void exportToFile(CliRepositoryManager repMan, FileExporter exporter,
-            List<VaultEntry> exportData) throws IOException {
-        File filePath = repMan.getExportFile(exporter, deflate);
-        LOG.log(Level.INFO, "Export to file: {0}", filePath.getName());
-        repMan.writeLineToJournal("Export to file: " + filePath.getName());
-
-        exporter.exportDataToFile(filePath.getAbsolutePath(), exportData, deflate);
-
     }
 
 }

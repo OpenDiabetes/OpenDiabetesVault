@@ -16,7 +16,6 @@
  */
 package de.opendiabetes.vault.cli;
 
-import java.io.IOException;
 import java.util.concurrent.Callable;
 import picocli.CommandLine;
 
@@ -27,38 +26,23 @@ import picocli.CommandLine;
  */
 @CommandLine.Command(description = "Manages repository journal.",
         name = "status", mixinStandardHelpOptions = true, version = "odv status 0.1")
-public class CliStatus implements Callable<Void> {
-
-    public static final String COMMAND = "status";
+public class CliVaultStatus implements Callable<Void> {
 
     @CommandLine.Option(names = {"-n", "--add-note"}, paramLabel = "NOTE", description = "Adds a note to the journal.")
     private String note;
 
     @Override
     public Void call() throws Exception {
+        CliRepositoryManager repMan = CliManager.openRepository();
         if (note != null && !note.isEmpty()) {
-            addNoteToJournal();
+            // add note to journal            
+            repMan.writeLineToJournal("NOTE: " + note);
         } else {
-            printJournal();
+            // print journal            
+            System.out.println(repMan.readJournal());
         }
 
+        repMan.closeJournal();
         return null;
     }
-
-    private void printJournal() throws IOException {
-        CliRepositoryManager repMan = CliRepositoryManager.getCurrentRepository();
-        if (repMan != null) {
-            System.out.println(repMan.readJournal());
-            repMan.closeJournal();
-        }
-    }
-
-    private void addNoteToJournal() throws IOException {
-        CliRepositoryManager repMan = CliRepositoryManager.getCurrentRepository();
-        if (repMan != null) {
-            repMan.writeLineToJournal("NOTE: " + note);
-            repMan.closeJournal();
-        }
-    }
-
 }

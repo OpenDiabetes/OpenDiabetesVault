@@ -16,16 +16,12 @@
  */
 package de.opendiabetes.vault.util;
 
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
-import java.time.temporal.TemporalAccessor;
 import java.util.Date;
 import java.util.Locale;
-import java.util.TimeZone;
 
 /**
  * container class for standard formatting problems

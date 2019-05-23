@@ -45,55 +45,68 @@ public class CliVaultImport implements Callable<Void> {
 
     private static final Logger LOG = Logger.getLogger(CliVaultImport.class.getName());
 
-    @CommandLine.Option(names = {"-t", "--type"}, description = "Importer Type. Valid values: ${COMPLETION-CANDIDATES}")
+    @CommandLine.Option(required = true, names = {"-t", "--type"}, paramLabel = "IMPORT-TYPE",
+            description = "Importer Type. Valid values: ${COMPLETION-CANDIDATES}")
     private CliImportType importType;
 
-    @CommandLine.Parameters
+    @CommandLine.Parameters(arity = "1..", paramLabel = "IMPORT-FILE",
+            description = "File(s) to be imported. Be sure to match importer type and file format.")
     private List<File> importFiles;
 
     @Override
     public Void call() throws Exception {
-        CliRepositoryManager repMan = CliRepositoryManager.getCurrentRepository();
-        if (repMan == null) {
-            LOG.severe("Can't open repository. Exit.");
-            System.exit(-1);
-        }
+        CliRepositoryManager repMan = CliManager.openRepository();
 
+        // check for double files
         ArrayList<String> fileChecksums = new ArrayList<>();
         ArrayList<File> filteredImportFiles = new ArrayList<>();
         for (File item : importFiles) {
-            String chkSm = FileCopyUtil.getFileChecksumMD5(item);
-            if (fileChecksums.contains(chkSm)) {
-                LOG.warning("Found file duplicate. Do not import.");
+            if (item.exists() && item.canRead()) {
+                String chkSm = FileCopyUtil.getFileChecksumMD5(item);
+                if (fileChecksums.contains(chkSm)) {
+                    System.out.println("Found file duplicate. Do not import "
+                            + item.getName() + "!");
+                } else {
+                    filteredImportFiles.add(item);
+                    fileChecksums.add(chkSm);
+                }
             } else {
-                filteredImportFiles.add(item);
-                fileChecksums.add(chkSm);
+                System.out.println("Can't read file \"" + item.getName() + "\". Skip.");
             }
         }
 
+        // import files
         List<VaultEntry> importData = new ArrayList<>();
         switch (importType) {
             case ODV_CSV:
                 for (File item : filteredImportFiles) {
                     LOG.log(Level.INFO, "Import file:{0}", item.getName());
-                    importData.addAll(checkAndImportFile(new VaultEntryCsvFileImporter(
-                            new ImporterOptions()), item));
-                    repMan.writeLineToJournal("Imported file: " + item.getName());
+                    List<VaultEntry> tmpImport = new VaultEntryCsvFileImporter(
+                            new ImporterOptions()).importDataFromFile(item.getAbsolutePath());
+                    if (tmpImport != null && !tmpImport.isEmpty()) {
+                        importData.addAll(tmpImport);
+                    }
+                    repMan.writeLineToJournal("Imported file:" + item.getName());
                 }
                 break;
             case ODV_JSON:
                 for (File item : filteredImportFiles) {
                     LOG.log(Level.INFO, "Import file:{0}", item.getName());
-                    importData.addAll(checkAndImportFile(new VaultEntryJsonFileImporter(
-                            new ImporterOptions()), item));
+                    List<VaultEntry> tmpImport = new VaultEntryJsonFileImporter(
+                            new ImporterOptions()).importDataFromFile(item.getAbsolutePath());
+                    if (tmpImport != null && !tmpImport.isEmpty()) {
+                        importData.addAll(tmpImport);
+                    }
                     repMan.writeLineToJournal("Imported file:" + item.getName());
                 }
                 break;
             case NIGHTSCOUT:
                 // check basic input
                 if (filteredImportFiles.size() < 2) {
-                    LOG.warning("Wrong number of files. For Nightscout import one profile file and one or more data files are needed. Exit.");
-                    return null;
+                    CliManager.exitWithError("Wrong number of files. "
+                            + "For Nightscout import one profile file and one "
+                            + "or more data files are needed. Exit.",
+                            repMan);
                 }
 
                 // import profile
@@ -105,26 +118,35 @@ public class CliVaultImport implements Callable<Void> {
                         profiles = profileImporter.readProfileFile(item.getAbsolutePath());
                         if (!profiles.records.isEmpty()) {
                             profileFile = item;
+                            System.out.println("Use file as profile: "
+                                    + item.getName());
                             break;
                         }
                     }
                 }
 
                 if (profileFile == null) {
-                    LOG.warning("Missing profile file. For Nightscout import one profile file and one or more data files are needed. Exit.");
-                    return null;
+                    CliManager.exitWithError("Missing profile file. For Nightscout "
+                            + "import one profile file and one or more data files "
+                            + "are needed. Exit.",
+                            repMan);
                 }
+
+                // prepare remaining import files
                 ArrayList<File> filteredImportFilesWithoutProfile = new ArrayList<>();
                 filteredImportFilesWithoutProfile.addAll(filteredImportFiles);
                 filteredImportFilesWithoutProfile.remove(profileFile);
 
-                // import data using profile
+                // import data using the imported profile
                 NightscoutImporterOptions options = new NightscoutImporterOptions(
                         profiles);
                 NightscoutImporter nsImporter = new NightscoutImporter(options);
                 for (File item : filteredImportFilesWithoutProfile) {
                     LOG.log(Level.INFO, "Import file:{0}", item.getName());
-                    importData.addAll(checkAndImportFile(nsImporter, item));
+                    List<VaultEntry> tmpImport = nsImporter.importDataFromFile(item.getAbsolutePath());
+                    if (tmpImport != null && !tmpImport.isEmpty()) {
+                        importData.addAll(tmpImport);
+                    }
                     repMan.writeLineToJournal("Imported file:" + item.getName());
                 }
 
@@ -133,25 +155,18 @@ public class CliVaultImport implements Callable<Void> {
                 throw new AssertionError("PROGRAMMING ERROR: Missing case for this type!");
         }
 
+        // backup imported files
         if (!importData.isEmpty()) {
-            repMan.writeLineToJournal("Import successful");
+            repMan.writeLineToJournal("Import successful.");
             repMan.mergeDataIntoRepository(importData);
             repMan.addFilesToImportFolder(filteredImportFiles);
-            repMan.writeLineToJournal("Import files backuped");
-        }
-        repMan.closeJournal();
-
-        return null;
-    }
-
-    private List<VaultEntry> checkAndImportFile(FileImporter importer, File importFile) throws IllegalAccessException {
-        if (importFile.exists() && importFile.canRead()) {
-            return importer.importDataFromFile(
-                    importFile.getAbsolutePath());
+            repMan.writeLineToJournal("Import files backuped.");
+            System.out.println("Finished successfully.");
         } else {
-            LOG.log(Level.SEVERE, "File does not exist or is not readable: {0}", importFile);
-            System.exit(-1);
+            System.err.println("No data has been imported. See log.");
         }
+
+        repMan.closeJournal();
         return null;
     }
 

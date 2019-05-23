@@ -184,7 +184,6 @@ public class CliRepositoryManager {
         sb.append("\n");
         journalWriter.write(sb.toString());
         journalWriter.flush();
-        System.out.print(sb.toString());
     }
 
     public String readJournal() throws IOException {
@@ -201,8 +200,12 @@ public class CliRepositoryManager {
         return sb.toString();
     }
 
-    public void closeJournal() throws IOException {
-        journalWriter.close();
+    public void closeJournal() {
+        try {
+            journalWriter.close();
+        } catch (IOException ex) {
+            LOG.log(Level.SEVERE, "Error while closing journal", ex);
+        }
     }
 
     public void mergeDataIntoRepository(List<VaultEntry> data) throws IllegalAccessException {
@@ -230,17 +233,16 @@ public class CliRepositoryManager {
         }
         return entries;
     }
-    
 
     List<VaultEntry> getDateFromTag(String input) throws IllegalAccessException {
         LOG.info("Read tag repository");
-        
+
         File tagFile = new File(vaultDir.getAbsolutePath().concat(File.separator).concat(input).concat(".tag.gz"));
-        if (!tagFile.exists() || !tagFile.canRead()){
+        if (!tagFile.exists() || !tagFile.canRead()) {
             LOG.log(Level.SEVERE, "Can''t read tag file: {0}", tagFile.getName());
             return null;
         }
-        
+
         List<VaultEntry> entries = new ArrayList<>();
         if (tagFile.length() > 0) {
             VaultEntryJsonFileImporter importer = new VaultEntryJsonFileImporter(new ImporterOptions());
@@ -279,7 +281,17 @@ public class CliRepositoryManager {
         fos.close();
     }
 
-    public File getExportFile(FileExporter exporter, boolean deflate) {
+    /**
+     * Exports given data to a file wihtin the export folder. Generates a suitable filename.
+     * 
+     * @param exportData data to export.
+     * @param exporter used exporter.
+     * @param deflate indicates if export data should be compressed.
+     * 
+     * @return the file name or null if an error occurred. 
+     */
+    public String exportDataToFile(List<VaultEntry> exportData, FileExporter exporter, boolean deflate) {
+        // prepare file name
         String fileEnding = exporter.getFileEnding();
         if (deflate) {
             fileEnding += ".gz";
@@ -287,11 +299,18 @@ public class CliRepositoryManager {
         File targetFile = new File(exportDir.getAbsolutePath() + "/" + EasyFormatter
                 .formatTimestampToFilename(new Date()) + "_export." + fileEnding);
         if (targetFile.exists()) {
-            return new File(exportDir.getAbsolutePath() + "/" + EasyFormatter
+            targetFile = new File(exportDir.getAbsolutePath() + "/" + EasyFormatter
                     .formatTimestampToFilename(new Date()) + "_export-"
                     + new Random().nextInt() + "." + fileEnding);
         }
-        return targetFile;
+
+        // export data
+        int result = exporter.exportDataToFile(targetFile.getAbsolutePath(), exportData, deflate);
+
+        if (result != FileExporter.RESULT_OK) {
+            return null;
+        }
+        return targetFile.getName();
     }
 
     public List<Map.Entry<String, Date>> getTagList() {

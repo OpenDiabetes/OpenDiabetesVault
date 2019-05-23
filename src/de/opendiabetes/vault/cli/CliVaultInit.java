@@ -22,7 +22,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Comparator;
 import java.util.concurrent.Callable;
-import java.util.logging.Level;
 import java.util.logging.Logger;
 import picocli.CommandLine;
 
@@ -31,7 +30,7 @@ import picocli.CommandLine;
  *
  * @author juehv
  */
-@CommandLine.Command(description = "Initializes the OpenDiabes Vault repository.",
+@CommandLine.Command(description = "Initializes the OpenDiabesVault repository.",
         name = "init", mixinStandardHelpOptions = true, version = "odv init 0.1")
 public class CliVaultInit implements Callable<Void> {
 
@@ -41,35 +40,37 @@ public class CliVaultInit implements Callable<Void> {
     public final String DIR_IMPORT = "import";
     public final String DIR_EXPORT = "export";
 
-    @CommandLine.Parameters(index = "0", paramLabel="REPO", description = "repository name")
+    @CommandLine.Parameters(index = "0", paramLabel = "REPO", description = "Repository name. (Required)")
     private String repositoryName;
 
-    @CommandLine.Option(names = {"-f", "--force"}, description = "overrides existing repositoriy")
+    @CommandLine.Option(names = {"-f", "--force"}, description = "Forces to override existing repositories.")
     private boolean force;
 
     @Override
     public Void call() throws Exception {
         File targetDir = new File(repositoryName);
         if (targetDir.exists() && force) {
+            // delete old repository
             Files.walk(Paths.get(targetDir.getAbsolutePath()))
                     .sorted(Comparator.reverseOrder())
                     .map(Path::toFile)
                     .forEach(File::delete);
         }
 
-        CliRepositoryManager manager = CliRepositoryManager.initRepository(
+        // create new repository
+        CliRepositoryManager repMan = CliRepositoryManager.initRepository(
                 targetDir.getAbsolutePath());
 
-        if (manager == null) {
-            LOG.severe("Can't create repository. Exit.");
+        if (repMan == null) {
+            System.err.println("Can't create repository. Exit.");
             System.exit(-1);
         }
 
-        manager.closeJournal();
+        System.out.println("Repository \"" + repositoryName
+                + "\" created in version "
+                + CliRepositoryManager.REPOSITORY_VERSION);
 
-        LOG.log(Level.INFO, "Repository \"{0}\" created in version "
-                + CliRepositoryManager.REPOSITORY_VERSION, repositoryName);
-
+        repMan.closeJournal();
         return null;
     }
 }

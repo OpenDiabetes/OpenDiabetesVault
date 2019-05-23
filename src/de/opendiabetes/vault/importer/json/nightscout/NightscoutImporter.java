@@ -145,7 +145,7 @@ public class NightscoutImporter extends FileImporter {
         Date lastTimestamp = startDate;
         List<Map.Entry<Date, Date>> gaps = new ArrayList<>();
         for (VaultEntry item : entries) {
-            if (!TimestampUtils.gapSmallerThan(lastTimestamp, item.getTimestamp(), 240)) {
+            if (!TimestampUtils.isGapSmallerThan(lastTimestamp, item.getTimestamp(), 240)) {
                 gaps.add(new AbstractMap.SimpleEntry<>(lastTimestamp, item.getTimestamp()));
             }
             lastTimestamp = item.getTimestamp();
