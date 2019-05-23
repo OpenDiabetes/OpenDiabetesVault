@@ -49,7 +49,7 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
 /**
- * Class to manage data-set repository.
+ * Class to manage data-set repository. This class is not threadsafe at all.
  *
  * @author juehv
  */
@@ -176,14 +176,18 @@ public class CliRepositoryManager {
         return INSTANCE;
     }
 
-    public void writeLineToJournal(String line) throws IOException {
-        StringBuilder sb = new StringBuilder();
-        sb.append(EasyFormatter.formatTimestampToLogEntry(new Date()));
-        sb.append(" - ");
-        sb.append(line);
-        sb.append("\n");
-        journalWriter.write(sb.toString());
-        journalWriter.flush();
+    public void writeLineToJournal(String line) {
+        try {
+            StringBuilder sb = new StringBuilder();
+            sb.append(EasyFormatter.formatTimestampToLogEntry(new Date()));
+            sb.append(" - ");
+            sb.append(line);
+            sb.append("\n");
+            journalWriter.write(sb.toString());
+            journalWriter.flush();
+        } catch (IOException ex) {
+            LOG.log(Level.SEVERE, "Error writing to journal.", ex);
+        }
     }
 
     public String readJournal() throws IOException {
@@ -282,13 +286,14 @@ public class CliRepositoryManager {
     }
 
     /**
-     * Exports given data to a file wihtin the export folder. Generates a suitable filename.
-     * 
+     * Exports given data to a file wihtin the export folder. Generates a
+     * suitable filename.
+     *
      * @param exportData data to export.
      * @param exporter used exporter.
      * @param deflate indicates if export data should be compressed.
-     * 
-     * @return the file name or null if an error occurred. 
+     *
+     * @return the file name or null if an error occurred.
      */
     public String exportDataToFile(List<VaultEntry> exportData, FileExporter exporter, boolean deflate) {
         // prepare file name
@@ -310,6 +315,7 @@ public class CliRepositoryManager {
         if (result != FileExporter.RESULT_OK) {
             return null;
         }
+        writeLineToJournal("Exported data to File: " + targetFile.getName());
         return targetFile.getName();
     }
 
@@ -361,6 +367,8 @@ public class CliRepositoryManager {
         // write new dataset
         VaultEntryJsonFileExporter exporter = new VaultEntryJsonFileExporter(new ExporterOptions());
         exporter.exportDataToFile(targetFile.getAbsolutePath(), data, true);
+
+        writeLineToJournal("Created new tag: " + targetTag);
     }
 
     public void copyTag(String sourceTag, String targetTag) throws IOException {
@@ -392,11 +400,9 @@ public class CliRepositoryManager {
         if (removeTag.exists()) {
             removeTag.delete();
             LOG.log(Level.INFO, "Removed tag \"{0}\" successfully.", remove);
-            writeLineToJournal("Removed tag \"" + remove + "\" successfully.");
+            writeLineToJournal("Removed tag \"" + remove + "\".");
         } else {
             LOG.log(Level.WARNING, "Could not find tag \"{0}\" to remove.", remove);
         }
     }
 }
-
-// TODO make threadsafe(er) with lock file
