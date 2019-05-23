@@ -62,9 +62,6 @@ public class TimestampUtils {
         return createCleanTimestamp(dateTime, TIME_FORMAT_DATASETS);
     }
 
-    public static String timestampToString(Date timestamp, String format) {
-        return new SimpleDateFormat(format).format(timestamp);
-    }
 
     public static Date createCleanTimestamp(Date rawDate) {
         Calendar calendar = GregorianCalendar.getInstance();

@@ -16,6 +16,7 @@
  */
 package de.opendiabetes.vault.util;
 
+import java.text.SimpleDateFormat;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
@@ -24,7 +25,7 @@ import java.util.Date;
 import java.util.Locale;
 
 /**
- * container class for standard formatting problems
+ * Container class for standard formatting problems.
  *
  * @author juehv
  */
@@ -36,19 +37,20 @@ public class EasyFormatter {
         return String.format(Locale.ENGLISH, DOUBLE_FORMAT, input).replace(",", "");
     }
 
+    public static String timestampToString(Date timestamp, String format) {
+        return new SimpleDateFormat(format).format(timestamp);
+    }
+
     public static String formatTimestampToDefaultFormat(Date timestamp) {
-        return TimestampUtils.timestampToString(timestamp,
-                TimestampUtils.TIME_FORMAT_DATASETS);
+        return timestampToString(timestamp, TimestampUtils.TIME_FORMAT_DATASETS);
     }
 
     public static String formatTimestampToLogEntry(Date timestamp) {
-        return TimestampUtils.timestampToString(timestamp,
-                "yyyy.MM.dd HH:mm");
+        return timestampToString(timestamp, "yyyy.MM.dd HH:mm");
     }
 
     public static String formatTimestampToFilename(Date timestamp) {
-        return TimestampUtils.timestampToString(timestamp,
-                "yyyy-MM-dd-HHmm");
+        return timestampToString(timestamp, "yyyy-MM-dd-HHmm");
     }
 
     public static String formatTimestampToIso8601(Date timestamp) {
