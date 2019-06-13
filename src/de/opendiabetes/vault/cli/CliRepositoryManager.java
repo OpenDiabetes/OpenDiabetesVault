@@ -64,7 +64,7 @@ public class CliRepositoryManager {
     public static final String DIR_EXPORT = "export";
     public static final String FILE_JOURNAL = "journal.txt";
     public static final String FILE_DATA = "data.json.gz";
-    public static final String REPOSITORY_VERSION = "0.1";
+    public static final String REPOSITORY_VERSION = "0.2";
 
     private final FileWriter journalWriter;
     private final File vaultDir;
@@ -85,7 +85,7 @@ public class CliRepositoryManager {
     private static boolean createDir(File dir) {
         boolean result = dir.mkdirs();
         if (!result) {
-            LOG.log(Level.SEVERE, "Can''t create directory {0}", dir.getAbsolutePath());
+            LOG.log(Level.SEVERE, "Can't create directory {0}", dir.getAbsolutePath());
         }
         return result;
     }
@@ -99,27 +99,37 @@ public class CliRepositoryManager {
         File journalFile = new File(vaultDir.getAbsolutePath().concat(File.separator).concat(FILE_JOURNAL));
         File dataFile = new File(vaultDir.getAbsolutePath().concat(File.separator).concat(FILE_DATA));
 
-        // check path
-        if (targetDir.exists()) {
-            LOG.severe("Directory already exists.");
-            return null;
-        }
-
         // create dirs
-        if (!createDir(targetDir)) {
+        if (!targetDir.exists() && !createDir(targetDir)) {
+            LOG.severe("Can't create target directory.");
             return null;
-        }
-        if (!createDir(vaultDir)) {
-            return null;
-        }
-        if (!createDir(importDir)) {
-            return null;
-        }
-        if (!createDir(exportDir)) {
+        } else if (targetDir.exists() && !targetDir.isDirectory()) {
+            LOG.severe("Target path exists but is not a directory.");
             return null;
         }
 
-        // create config file and data file
+        if (!vaultDir.exists() && !createDir(vaultDir)) {
+            LOG.severe("Can't create new .vault directory.");
+            return null;
+        }
+
+        if (!importDir.exists() && !createDir(importDir)) {
+            LOG.severe("Can't create new importBackup directory.");
+            return null;
+        } else if (importDir.exists() && !importDir.isDirectory()) {
+            LOG.severe("Import backup path exists but is not a directory.");
+            return null;
+        }
+
+        if (!exportDir.exists() && !createDir(exportDir)) {
+            LOG.severe("Can't create new export directory.");
+            return null;
+        } else if (importDir.exists() && !importDir.isDirectory()) {
+            LOG.severe("Export path exists but is not a directory.");
+            return null;
+        }
+
+        // create instance and journal
         try {
             INSTANCE = new CliRepositoryManager(vaultDir, importDir, exportDir,
                     journalFile, dataFile);

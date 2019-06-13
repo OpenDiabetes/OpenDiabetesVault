@@ -36,20 +36,21 @@ public class CliVaultInit implements Callable<Void> {
 
     private static final Logger LOG = Logger.getLogger(CliVaultInit.class.getName());
 
-    public final String DIR_VAULT = ".vault";
-    public final String DIR_IMPORT = "import";
-    public final String DIR_EXPORT = "export";
-
-    @CommandLine.Parameters(index = "0", paramLabel = "REPO", description = "Repository name. (Required)")
-    private String repositoryName;
+    @CommandLine.Parameters(index = "0", paramLabel = "REPO", description = "Repository path. (Required)")
+    private String repositoryPath;
 
     @CommandLine.Option(names = {"-f", "--force"}, description = "Forces to override existing repositories.")
     private boolean force;
 
     @Override
     public Void call() throws Exception {
-        File targetDir = new File(repositoryName);
-        if (targetDir.exists() && force) {
+        File targetDir = new File(new File(repositoryPath).getAbsolutePath()
+                .concat(File.separator).concat(CliRepositoryManager.DIR_VAULT));
+
+        if (targetDir.exists() && !force) {
+            System.err.println("\"" + repositoryPath + "\" seems to be a ODV repository. Use --force to override. Exit.");
+            System.exit(-1);
+        } else if (targetDir.exists() && force) {
             // delete old repository
             Files.walk(Paths.get(targetDir.getAbsolutePath()))
                     .sorted(Comparator.reverseOrder())
@@ -59,14 +60,14 @@ public class CliVaultInit implements Callable<Void> {
 
         // create new repository
         CliRepositoryManager repMan = CliRepositoryManager.initRepository(
-                targetDir.getAbsolutePath());
+                new File(repositoryPath).getAbsolutePath());
 
         if (repMan == null) {
             System.err.println("Can't create repository. Exit.");
             System.exit(-1);
         }
 
-        System.out.println("Repository \"" + repositoryName
+        System.out.println("Repository \"" + repositoryPath
                 + "\" created in version "
                 + CliRepositoryManager.REPOSITORY_VERSION);
 
