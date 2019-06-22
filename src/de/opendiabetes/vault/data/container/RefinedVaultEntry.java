@@ -20,20 +20,32 @@ import java.util.Date;
 
 /**
  * Container type for data that can be calculated from one or more VaultEntries
- * 
+ *
  * @author juehv
  */
-public class RefinedVaultEntry extends VaultEntry{
-    
-    private final RefinedVaultEntryType type;
+public class RefinedVaultEntry extends VaultEntry {
 
-    public RefinedVaultEntry(final RefinedVaultEntryType type, final Date timestamp, final double value) {
+    private final RefinedVaultEntryType type;
+    private final VaultEntryType underlyingType;
+
+    public RefinedVaultEntry(final RefinedVaultEntryType type,
+            final VaultEntryType underlyingType, final Date timestamp,
+            final double value) {
         super(VaultEntryType.REFINED_VAULT_ENTRY, timestamp, value);
-        this.type= type;
+        this.type = type;
+        this.underlyingType = underlyingType;
+    }
+
+    public RefinedVaultEntry(final RefinedVaultEntryType type, final Date timestamp,
+            final double value) {
+        this(type, VaultEntryType.REFINED_VAULT_ENTRY, timestamp, value);
     }
 
     public RefinedVaultEntryType getRefinedType() {
         return type;
     }
-    
+
+    public VaultEntryType getUnderlyingType() {
+        return underlyingType;
+    }
 }
