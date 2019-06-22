@@ -253,7 +253,7 @@ public class CliRepositoryManager {
 
         File tagFile = new File(vaultDir.getAbsolutePath().concat(File.separator).concat(input).concat(".tag.gz"));
         if (!tagFile.exists() || !tagFile.canRead()) {
-            LOG.log(Level.SEVERE, "Can''t read tag file: {0}", tagFile.getName());
+            LOG.log(Level.SEVERE, "Can't read tag file: {0}", tagFile.getName());
             return null;
         }
 

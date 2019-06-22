@@ -62,7 +62,6 @@ public class TimestampUtils {
         return createCleanTimestamp(dateTime, TIME_FORMAT_DATASETS);
     }
 
-
     public static Date createCleanTimestamp(Date rawDate) {
         Calendar calendar = GregorianCalendar.getInstance();
         calendar.setTime(rawDate);
@@ -86,13 +85,21 @@ public class TimestampUtils {
         return secondsOfDay;
     }
 
+    public static Date addSecondsToTimestamp(Date timestamp, long seconds) {
+        return new Date(addSecondsToTimestamp(timestamp.getTime(), seconds));
+    }
+
+    public static long addSecondsToTimestamp(long timestamp, long seconds) {
+        timestamp += seconds * 1000; // 1 m = 60000 ms
+        return timestamp;
+    }
+
     public static Date addMinutesToTimestamp(Date timestamp, long minutes) {
         return new Date(addMinutesToTimestamp(timestamp.getTime(), minutes));
     }
 
     public static long addMinutesToTimestamp(long timestamp, long minutes) {
-        timestamp += minutes * 60000; // 1 m = 60000 ms
-        return timestamp;
+        return addSecondsToTimestamp(timestamp, minutes * 60);
     }
 
     public static boolean isGapSmallerThan(Date timestampOne, Date timestampTwo, int gapSizeInMinutes) {
@@ -400,5 +407,30 @@ public class TimestampUtils {
 
     public static int getDurationInSeconds(Date start, Date stop) {
         return (int) ((stop.getTime() - start.getTime()) / 1000);
+    }
+
+    public static int getOverlappingMinutes(Date startRange1, Date endRange1,
+            Date startRange2, Date endRange2) {
+        // do they overlap at all?
+        if (endRange1.before(startRange2)
+                || endRange2.before(startRange1)) {
+            return 0;
+        }
+
+        // get overlapping time
+        if (startRange1.before(startRange2)) {
+            if (endRange1.before(endRange2)) {
+                return getDurationInMinutes(startRange2, endRange1);
+            } else {
+                return getDurationInMinutes(startRange2, endRange2);
+            }
+        } else {
+            if (endRange1.before(endRange2)) {
+                return getDurationInMinutes(startRange1, endRange1);
+            } else {
+                return getDurationInMinutes(startRange1, endRange2);
+
+            }
+        }
     }
 }

@@ -18,6 +18,8 @@ package de.opendiabetes.vault.examples;
 
 import de.opendiabetes.vault.data.container.LabelType;
 import de.opendiabetes.vault.data.container.LabeledSliceEntry;
+import de.opendiabetes.vault.data.container.RefinedVaultEntry;
+import de.opendiabetes.vault.data.container.RefinedVaultEntryType;
 import de.opendiabetes.vault.data.container.VaultEntry;
 import de.opendiabetes.vault.data.container.VaultEntryType;
 import de.opendiabetes.vault.util.TimestampUtils;
@@ -67,6 +69,28 @@ public class ExampleDataGenerator {
             entries.add(tmpEntry);
         }
 
+        return entries;
+    }
+
+    static List<VaultEntry> generateMixedVaultEntries(int noOfEntries) {
+        int splitNoOfEntries = (int) Math.round(noOfEntries * 0.80);
+        List<VaultEntry> entries = generateVaultEntries(splitNoOfEntries);
+        Date timestamp = entries.get(entries.size() - 1).getTimestamp();
+        List<Double> values = new ArrayList<>();
+        Random random = new Random();
+        for (int i = 0; i < 5; i++) {
+            values.add((random.nextInt(500) + 1) / 1000.0);
+        }
+        for (int i = 0; i < (noOfEntries - splitNoOfEntries); i++) {
+            RefinedVaultEntryType usedType = RefinedVaultEntryType.CGM_PREDICTION;
+            usedType.label = String.valueOf(random.nextInt(4));
+            RefinedVaultEntry tmpEntry = new RefinedVaultEntry(
+                    usedType,
+                    TimestampUtils.addMinutesToTimestamp(timestamp, i + 1),
+                    values.size());
+            tmpEntry.setValueExtension(values);
+            entries.add(tmpEntry);
+        }
         return entries;
     }
 }

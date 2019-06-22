@@ -55,7 +55,7 @@ public class CliProcessing implements Callable<Void> {
     private static class Exclusive {
 
         @CommandLine.Option(required = true, names = {"--generate-skeleton"},
-                defaultValue = "ProcessingContainerImpl", paramLabel = "CLASSNAME",
+                paramLabel = "CLASSNAME",
                 description = "Generates a skeleton file for a loadable processing container.")
         private String generateSkeletonFileName;
 
@@ -81,6 +81,7 @@ public class CliProcessing implements Callable<Void> {
     @Override
     public Void call() throws Exception {
         if (exclusive.generateSkeletonFileName != null) {
+            System.out.println("skeleton not null");
             // generate skeleton option
             if (!exclusive.generateSkeletonFileName.endsWith(".java")) {
                 exclusive.generateSkeletonFileName
@@ -123,13 +124,20 @@ public class CliProcessing implements Callable<Void> {
             inputData = new ArrayList<>();
             inputData.add(repMan.getCompleteData());
         } else {
-            // load tag data
-            inputData = new ArrayList<>();
-            inputData.add(repMan.getDateFromTag(exclusive.combination.input));
+            // check if tag exists
+            if (repMan.getTagNameList().contains(exclusive.combination.input)) {
+                // load tag data
+                inputData = new ArrayList<>();
+                inputData.add(repMan.getDateFromTag(exclusive.combination.input));
+            } else {
+                // tag not found --> exit
+                CliManager.exitWithError("Can't load input data. Tag does not exist! Exit.",
+                        repMan);
+            }
         }
 
         if (inputData.isEmpty()) {
-            CliManager.exitWithError("Can't load input data. Does Tag exist? Exit.",
+            CliManager.exitWithError("Can't load input data. Exit.",
                     repMan);
         }
 

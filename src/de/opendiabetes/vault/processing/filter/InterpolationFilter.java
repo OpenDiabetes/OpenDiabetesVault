@@ -31,9 +31,9 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
+ * The filter() Method checks if the vaultentrytype of the vaultEntry equals the given vaultentry.
  *
- * @author Daniel This class extends Filter. The filter() Method checks if the
- * vaultentrytype of the vaultEntry equals the given vaultentry.
+ * @author Daniel 
  */
 public class InterpolationFilter extends Filter {
 

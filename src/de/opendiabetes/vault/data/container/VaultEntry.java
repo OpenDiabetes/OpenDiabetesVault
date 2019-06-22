@@ -152,7 +152,4 @@ public class VaultEntry implements Serializable {
         final VaultEntry other = (VaultEntry) obj;
         return true;
     }
-    
-    
-
 }
