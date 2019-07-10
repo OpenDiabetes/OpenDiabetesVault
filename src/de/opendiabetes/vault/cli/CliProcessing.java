@@ -81,7 +81,6 @@ public class CliProcessing implements Callable<Void> {
     @Override
     public Void call() throws Exception {
         if (exclusive.generateSkeletonFileName != null) {
-            System.out.println("skeleton not null");
             // generate skeleton option
             if (!exclusive.generateSkeletonFileName.endsWith(".java")) {
                 exclusive.generateSkeletonFileName
@@ -213,7 +212,7 @@ public class CliProcessing implements Callable<Void> {
 
             // Convert directory of container File to a URL
             URL url = exclusive.combination.processingContainerFile
-                    .getParentFile().getAbsoluteFile().toURI().toURL();
+                    .getAbsoluteFile().getParentFile().toURI().toURL();
             URL[] urls = new URL[]{url};
 
             // Create a new class loader with the directory
