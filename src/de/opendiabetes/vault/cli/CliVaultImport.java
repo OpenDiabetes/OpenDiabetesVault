@@ -157,8 +157,8 @@ public class CliVaultImport implements Callable<Void> {
         // backup imported files
         if (!importData.isEmpty()) {
             repMan.writeLineToJournal("Import successful.");
-            repMan.mergeDataIntoRepository(importData);
-            repMan.addFilesToImportFolder(filteredImportFiles);
+            repMan.mergeDataIntoMaster(importData);
+            repMan.saveFilesToImportFolder(filteredImportFiles);
             repMan.writeLineToJournal("Import files backuped.");
             System.out.println("Finished successfully.");
         } else {

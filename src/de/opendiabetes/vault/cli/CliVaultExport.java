@@ -16,11 +16,16 @@
  */
 package de.opendiabetes.vault.cli;
 
+import de.opendiabetes.vault.data.container.SliceEntry;
 import de.opendiabetes.vault.data.container.VaultEntry;
 import de.opendiabetes.vault.exporter.ExporterOptions;
 import de.opendiabetes.vault.exporter.FileExporter;
+import de.opendiabetes.vault.exporter.csv.SliceEntryCsvFileExporter;
 import de.opendiabetes.vault.exporter.csv.VaultEntryCsvFileExporter;
+import de.opendiabetes.vault.exporter.json.SliceEntryJsonFileExporter;
 import de.opendiabetes.vault.exporter.json.VaultEntryJsonFileExporter;
+import de.opendiabetes.vault.util.VaultEntryUtils;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Callable;
 import picocli.CommandLine;
@@ -51,33 +56,47 @@ public class CliVaultExport implements Callable<Void> {
 
         // gather data
         List<VaultEntry> exportData = null;
+        List<SliceEntry> exportSlices = null;
         if (tag != null && !tag.isEmpty()) {
             // export from tag
             if (repMan.getTagNameList().contains(tag)) {
-                exportData = repMan.getDateFromTag(tag);
+                List<List<VaultEntry>> tmpData = repMan.getDataFromTag(tag);
+                exportSlices = VaultEntryUtils.computeSlicesEntries(tmpData);
+                exportData = VaultEntryUtils.mergeSlices(tmpData);
             } else {
                 CliManager.exitWithError("Tag not found. Exit.", repMan);
             }
         } else {
             // export complete data
-            exportData = repMan.getCompleteData();
+            exportData = repMan.getDataFromMaster();
         }
 
-        if (exportData == null) {
+        if (exportData == null || exportData.isEmpty()) {
             CliManager.exitWithError("No data for export found. Exit.", repMan);
         }
 
         // export data
         FileExporter exporter;
         String exportName = null;
+        String exportSliceName = null;
         switch (exportType) {
             case ODV_CSV:
                 exporter = new VaultEntryCsvFileExporter(new ExporterOptions());
-                exportName = repMan.exportDataToFile(exportData, exporter, deflate);
+                exportName = repMan.exportDataToExportFolder(exportData, exporter, deflate);
+                if (exportSlices != null && !exportSlices.isEmpty()) {
+                    exportSliceName = repMan.exportDataToExportFolder(exportSlices,
+                            new SliceEntryCsvFileExporter(new ExporterOptions()),
+                            deflate);
+                }
                 break;
             case ODV_JSON:
                 exporter = new VaultEntryJsonFileExporter(new ExporterOptions());
-                exportName = repMan.exportDataToFile(exportData, exporter, deflate);
+                exportName = repMan.exportDataToExportFolder(exportData, exporter, deflate);
+                if (exportSlices != null && !exportSlices.isEmpty()) {
+                    exportSliceName = repMan.exportDataToExportFolder(exportSlices,
+                            new SliceEntryJsonFileExporter(new ExporterOptions()),
+                            deflate);
+                }
                 break;
             case CUSTOM_CSV:
                 CliManager.exitWithError("Not supported yet. Exit.", repMan);
@@ -87,7 +106,10 @@ public class CliVaultExport implements Callable<Void> {
         }
 
         if (exportName != null && !exportName.isEmpty()) {
-            System.out.println("Export to file: " + exportName);
+            System.out.println("Export data to file: " + exportName);
+            if (exportSliceName != null && !exportSliceName.isEmpty()) {
+                System.out.println("Export slice information to file: " + exportSliceName);
+            }
             System.out.println("Finished successfully.");
         } else {
             CliManager.exitWithError("Error while exporting data. See log.", repMan);

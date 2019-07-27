@@ -16,10 +16,15 @@
  */
 package de.opendiabetes.vault.util;
 
+import de.opendiabetes.vault.data.container.SliceEntry;
 import de.opendiabetes.vault.data.container.VaultEntry;
 import de.opendiabetes.vault.data.container.VaultEntryType;
+import de.opendiabetes.vault.exporter.ExporterOptions;
+import de.opendiabetes.vault.exporter.json.SliceEntryJsonFileExporter;
+import de.opendiabetes.vault.exporter.json.VaultEntryJsonFileExporter;
 import de.opendiabetes.vault.processing.filter.Filter;
 import de.opendiabetes.vault.processing.filter.FilterResult;
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
@@ -255,6 +260,61 @@ public class VaultEntryUtils implements Comparator<VaultEntry> {
             data.sort(new VaultEntryUtils());
         }
         return data;
+    }
+    
+    /**
+     * Computes SliceEntry's for a given dataset.
+     * @param data
+     * @return 
+     */
+    public static List<SliceEntry> computeSlicesEntries (List<List<VaultEntry>> data){
+        List<SliceEntry> slices = null;
+        if (data != null && !data.isEmpty()) {
+            if (data.size() > 1) {
+                // generate slice entries
+                slices = new ArrayList<>();
+                for (List<VaultEntry> item : data) {
+                    if (!item.isEmpty()) {
+                        Date startDate = item.get(0).getTimestamp();
+                        Date endDate = item.get(item.size() - 1).getTimestamp();
+
+                        slices.add(new SliceEntry(startDate,
+                                TimestampUtils.getDurationInMinutes(startDate, endDate)));
+                    }
+                }
+            }
+        } 
+        
+        return slices;
+    }
+    
+    /**
+     * Merges slices to one dataset.
+     * 
+     * @param data
+     * @return 
+     */
+    public static List<VaultEntry> mergeSlices(List<List<VaultEntry>> data){
+        if (data != null && !data.isEmpty()) {
+            List<VaultEntry> mergedData;
+            if (data.size() > 1) {
+                // merge slices
+                mergedData = new ArrayList<>();
+                for (List<VaultEntry> item : data) {
+                    mergedData.addAll(item);
+                }
+            } else {
+                mergedData = data.get(0);
+            }
+
+            // sanity jobs
+            mergedData = VaultEntryUtils.removeDublicates(mergedData);
+            mergedData.sort(new VaultEntryUtils());
+
+            return mergedData;
+        } else {
+            return null;
+        }
     }
 
     /**

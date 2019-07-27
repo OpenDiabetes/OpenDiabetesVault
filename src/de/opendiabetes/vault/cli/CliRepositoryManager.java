@@ -16,13 +16,17 @@
  */
 package de.opendiabetes.vault.cli;
 
+import de.opendiabetes.vault.data.container.SliceEntry;
 import de.opendiabetes.vault.data.container.VaultEntry;
 import de.opendiabetes.vault.exporter.ExporterOptions;
 import de.opendiabetes.vault.exporter.FileExporter;
+import de.opendiabetes.vault.exporter.json.SliceEntryJsonFileExporter;
 import de.opendiabetes.vault.exporter.json.VaultEntryJsonFileExporter;
 import de.opendiabetes.vault.importer.ImporterOptions;
+import de.opendiabetes.vault.importer.json.SliceEntryJsonFileImporter;
 import de.opendiabetes.vault.importer.json.VaultEntryJsonFileImporter;
 import de.opendiabetes.vault.util.EasyFormatter;
+import de.opendiabetes.vault.util.TimestampUtils;
 import de.opendiabetes.vault.util.VaultEntryUtils;
 import java.io.BufferedReader;
 import java.io.File;
@@ -64,6 +68,8 @@ public class CliRepositoryManager {
     public static final String DIR_EXPORT = "export";
     public static final String FILE_JOURNAL = "journal.txt";
     public static final String FILE_DATA = "data.json.gz";
+    public static final String TAG_EXTENSION = ".tag.gz";
+    public static final String TAG_SLICE_EXTENSION = ".tag-slices.gz";
     public static final String REPOSITORY_VERSION = "0.2";
 
     private final FileWriter journalWriter;
@@ -82,6 +88,8 @@ public class CliRepositoryManager {
         this.dataFile = dataFile;
     }
 
+    //**************
+    //region Folder management
     private static boolean createDir(File dir) {
         boolean result = dir.mkdirs();
         if (!result) {
@@ -186,6 +194,73 @@ public class CliRepositoryManager {
         return INSTANCE;
     }
 
+    public void saveFilesToImportFolder(List<File> importFile) throws FileNotFoundException, IOException {
+        LOG.info("Backup import files");
+        // create file
+        File outputFile = new File(importDir,
+                EasyFormatter.formatTimestampToFilename(new Date()) + "_import.zip");
+        if (outputFile.exists()) {
+            outputFile = new File(importDir,
+                    EasyFormatter.formatTimestampToFilename(new Date()) + "_import-"
+                    + new Random().nextInt() + ".zip");
+        }
+
+        // dump files
+        FileOutputStream fos = new FileOutputStream(outputFile);
+        ZipOutputStream zipOut = new ZipOutputStream(fos);
+        for (File fileToZip : importFile) {
+            FileInputStream fis = new FileInputStream(fileToZip);
+            ZipEntry zipEntry = new ZipEntry(fileToZip.getName());
+            zipOut.putNextEntry(zipEntry);
+
+            byte[] bytes = new byte[1024];
+            int length;
+            while ((length = fis.read(bytes)) >= 0) {
+                zipOut.write(bytes, 0, length);
+            }
+            fis.close();
+        }
+        zipOut.close();
+        fos.close();
+    }
+    
+    /**
+     * Exports given data to a file wihtin the export folder. Generates a
+     * suitable filename.
+     *
+     * @param exportData data to export.
+     * @param exporter used exporter.
+     * @param deflate indicates if export data should be compressed.
+     *
+     * @return the file name or null if an error occurred.
+     */
+    public String exportDataToExportFolder(List exportData, FileExporter exporter, boolean deflate) {
+        // prepare file name
+        String fileEnding = exporter.getFileEnding();
+        if (deflate) {
+            fileEnding += ".gz";
+        }
+        File targetFile = new File(exportDir.getAbsolutePath() + "/" + EasyFormatter
+                .formatTimestampToFilename(new Date()) + "_export." + fileEnding);
+        while (targetFile.exists()) {
+            targetFile = new File(exportDir.getAbsolutePath() + "/" + EasyFormatter
+                    .formatTimestampToFilename(new Date()) + "_export-"
+                    + new Random().nextInt() + "." + fileEnding);
+        }
+
+        // export data
+        int result = exporter.exportDataToFile(targetFile.getAbsolutePath(), exportData, deflate);
+
+        if (result != FileExporter.RESULT_OK) {
+            return null;
+        }
+        writeLineToJournal("Exported data to File: " + targetFile.getName());
+        return targetFile.getName();
+    }
+
+    // endregion
+    //**************
+    //region Journal management
     public void writeLineToJournal(String line) {
         try {
             StringBuilder sb = new StringBuilder();
@@ -222,10 +297,13 @@ public class CliRepositoryManager {
         }
     }
 
-    public void mergeDataIntoRepository(List<VaultEntry> data) throws IllegalAccessException {
+    // endregion
+    //**************
+    // region Master (complete dataset) management
+    public void mergeDataIntoMaster(List<VaultEntry> data) throws IllegalAccessException {
         LOG.info("Merge data to repository.");
         // read old dataset
-        List<VaultEntry> entries = getCompleteData();
+        List<VaultEntry> entries = getDataFromMaster();
 
         // merge data
         entries.addAll(data);
@@ -238,7 +316,7 @@ public class CliRepositoryManager {
         exporter.exportDataToFile(dataFile.getAbsolutePath(), entries, true);
     }
 
-    public List<VaultEntry> getCompleteData() throws IllegalAccessException {
+    public List<VaultEntry> getDataFromMaster() throws IllegalAccessException {
         LOG.info("Read complete repository.");
         List<VaultEntry> entries = new ArrayList<>();
         if (dataFile.exists() && dataFile.length() > 0) {
@@ -248,101 +326,23 @@ public class CliRepositoryManager {
         return entries;
     }
 
-    List<VaultEntry> getDateFromTag(String input) throws IllegalAccessException {
-        LOG.info("Read tag repository");
-
-        File tagFile = new File(vaultDir.getAbsolutePath().concat(File.separator).concat(input).concat(".tag.gz"));
-        if (!tagFile.exists() || !tagFile.canRead()) {
-            LOG.log(Level.SEVERE, "Can't read tag file: {0}", tagFile.getName());
-            return null;
-        }
-
-        List<VaultEntry> entries = new ArrayList<>();
-        if (tagFile.length() > 0) {
-            VaultEntryJsonFileImporter importer = new VaultEntryJsonFileImporter(new ImporterOptions());
-            entries.addAll(importer.importDataFromFile(tagFile.getAbsolutePath()));
-        }
-        return entries;
-    }
-
-    public void addFilesToImportFolder(List<File> importFile) throws FileNotFoundException, IOException {
-        LOG.info("Backup import files");
-        // create file
-        File outputFile = new File(importDir,
-                EasyFormatter.formatTimestampToFilename(new Date()) + "_import.zip");
-        if (outputFile.exists()) {
-            outputFile = new File(importDir,
-                    EasyFormatter.formatTimestampToFilename(new Date()) + "_import-"
-                    + new Random().nextInt() + ".zip");
-        }
-
-        // dump files
-        FileOutputStream fos = new FileOutputStream(outputFile);
-        ZipOutputStream zipOut = new ZipOutputStream(fos);
-        for (File fileToZip : importFile) {
-            FileInputStream fis = new FileInputStream(fileToZip);
-            ZipEntry zipEntry = new ZipEntry(fileToZip.getName());
-            zipOut.putNextEntry(zipEntry);
-
-            byte[] bytes = new byte[1024];
-            int length;
-            while ((length = fis.read(bytes)) >= 0) {
-                zipOut.write(bytes, 0, length);
-            }
-            fis.close();
-        }
-        zipOut.close();
-        fos.close();
-    }
-
-    /**
-     * Exports given data to a file wihtin the export folder. Generates a
-     * suitable filename.
-     *
-     * @param exportData data to export.
-     * @param exporter used exporter.
-     * @param deflate indicates if export data should be compressed.
-     *
-     * @return the file name or null if an error occurred.
-     */
-    public String exportDataToFile(List<VaultEntry> exportData, FileExporter exporter, boolean deflate) {
-        // prepare file name
-        String fileEnding = exporter.getFileEnding();
-        if (deflate) {
-            fileEnding += ".gz";
-        }
-        File targetFile = new File(exportDir.getAbsolutePath() + "/" + EasyFormatter
-                .formatTimestampToFilename(new Date()) + "_export." + fileEnding);
-        if (targetFile.exists()) {
-            targetFile = new File(exportDir.getAbsolutePath() + "/" + EasyFormatter
-                    .formatTimestampToFilename(new Date()) + "_export-"
-                    + new Random().nextInt() + "." + fileEnding);
-        }
-
-        // export data
-        int result = exporter.exportDataToFile(targetFile.getAbsolutePath(), exportData, deflate);
-
-        if (result != FileExporter.RESULT_OK) {
-            return null;
-        }
-        writeLineToJournal("Exported data to File: " + targetFile.getName());
-        return targetFile.getName();
-    }
-
+    // endregion
+    //**************
+    // retion TAG management
     public List<Map.Entry<String, Date>> getTagList() {
         LOG.info("Read tag list.");
         File[] tagFiles = vaultDir.listFiles(new FileFilter() {
             @Override
             public boolean accept(File pathname) {
                 String nameOfFile = pathname.getName();
-                return (nameOfFile != null && !nameOfFile.isEmpty() && nameOfFile.endsWith(".tag.gz"));
+                return (nameOfFile != null && !nameOfFile.isEmpty() && nameOfFile.endsWith(TAG_EXTENSION));
             }
         });
 
         List<Map.Entry<String, Date>> returnValue = new ArrayList<>();
         for (File item : tagFiles) {
             returnValue.add(new AbstractMap.SimpleEntry<>(
-                    item.getName().substring(0, item.getName().indexOf(".tag.gz")),
+                    item.getName().substring(0, item.getName().indexOf(TAG_EXTENSION)),
                     new Date(item.lastModified())));
         }
         return returnValue;
@@ -354,44 +354,139 @@ public class CliRepositoryManager {
             @Override
             public boolean accept(File pathname) {
                 String nameOfFile = pathname.getName();
-                return (nameOfFile != null && !nameOfFile.isEmpty() && nameOfFile.endsWith(".tag.gz"));
+                return (nameOfFile != null && !nameOfFile.isEmpty() && nameOfFile.endsWith(TAG_EXTENSION));
             }
         });
 
         List<String> returnValue = new ArrayList<>();
         for (File item : tagFiles) {
             returnValue.add(
-                    item.getName().substring(0, item.getName().indexOf(".tag.gz")));
+                    item.getName().substring(0, item.getName().indexOf(TAG_EXTENSION)));
         }
         return returnValue;
     }
 
-    public void createTagFromData(List<VaultEntry> data, String targetTag) {
+    List<List<VaultEntry>> getDataFromTag(String input) throws IllegalAccessException {
+        LOG.info("Read tag repository");
+        List<List<VaultEntry>> returnValue = new ArrayList<>();
+
+        // get the data
+        File tagFile = new File(vaultDir.getAbsolutePath().concat(File.separator).concat(input).concat(TAG_EXTENSION));
+        if (!tagFile.exists() || !tagFile.canRead()) {
+            LOG.log(Level.SEVERE, "Can't read tag file: {0}", tagFile.getName());
+            return null;
+        }
+
+        List<VaultEntry> entries = new ArrayList<>();
+        if (tagFile.length() > 0) {
+            VaultEntryJsonFileImporter importer = new VaultEntryJsonFileImporter(new ImporterOptions());
+            entries.addAll(importer.importDataFromFile(tagFile.getAbsolutePath()));
+            LOG.info("Got data from tag file.");
+        }
+
+        // get the slices
+        File tagSliceFile = new File(vaultDir.getAbsolutePath().concat(File.separator).concat(input).concat(TAG_SLICE_EXTENSION));
+        if (!tagSliceFile.exists() || !tagSliceFile.canRead()) {
+            LOG.log(Level.WARNING, "Can't read slice tag file: {0}. No slicing.", tagFile.getName());
+            returnValue.add(entries);
+            return returnValue;
+        }
+
+        if (tagSliceFile.length() > 0) {
+            SliceEntryJsonFileImporter importer = new SliceEntryJsonFileImporter(new ImporterOptions());
+            List<SliceEntry> slices = importer.importDataFromFile(tagSliceFile.getAbsolutePath());
+            LOG.info("Got slices from slice file. Slicing ...");
+
+            // slicing
+            for (SliceEntry slice : slices) {
+                List<VaultEntry> tmpSlice = new ArrayList<>();
+                // create start and end point with +/- 1 minute to use .after & .before
+                Date startTimestamp = TimestampUtils.addMinutesToTimestamp(
+                        TimestampUtils.createCleanTimestamp(slice.startTimestamp), -1);
+                Date endTimestamp = TimestampUtils.addMinutesToTimestamp(startTimestamp,
+                        slice.durationInMinutes + 2);
+                for (VaultEntry entry : entries) {
+                    Date entryTimestamp = TimestampUtils.createCleanTimestamp(entry.getTimestamp());
+
+                    if (entryTimestamp.after(startTimestamp)
+                            && entryTimestamp.before(endTimestamp)) {
+                        tmpSlice.add(entry);
+                    }
+                }
+                returnValue.add(tmpSlice);
+            }
+        }
+
+        return returnValue; // returns empty list on error of slicing.
+    }
+
+    public void createTagFromData(List<List<VaultEntry>> data, String targetTag) {
         File targetFile = new File(vaultDir.getAbsolutePath()
-                .concat(File.separator).concat(targetTag).concat(".tag.gz"));
+                .concat(File.separator).concat(targetTag).concat(TAG_EXTENSION));
+        File targetSliceFile = new File(vaultDir.getAbsolutePath()
+                .concat(File.separator).concat(targetTag).concat(TAG_SLICE_EXTENSION));
 
-        // sanity jobs
-        data = VaultEntryUtils.removeDublicates(data);
-        data.sort(new VaultEntryUtils());
+        List<SliceEntry> slices = null;
+        if (data != null && !data.isEmpty()) {
+            List<VaultEntry> mergedData;
+            if (data.size() > 1) {
+                LOG.info("Output contains more than one slice. A slice file will be exported to the tag.");
+                // generate slice entries
+                slices = new ArrayList<>();
+                for (List<VaultEntry> item : data) {
+                    if (!item.isEmpty()) {
+                        Date startDate = item.get(0).getTimestamp();
+                        Date endDate = item.get(item.size() - 1).getTimestamp();
 
-        // write new dataset
-        VaultEntryJsonFileExporter exporter = new VaultEntryJsonFileExporter(new ExporterOptions());
-        exporter.exportDataToFile(targetFile.getAbsolutePath(), data, true);
+                        slices.add(new SliceEntry(startDate,
+                                TimestampUtils.getDurationInMinutes(startDate, endDate)));
+                    }
+                }
 
-        writeLineToJournal("Created new tag: " + targetTag);
+                // merge slices
+                mergedData = new ArrayList<>();
+                for (List<VaultEntry> item : data) {
+                    mergedData.addAll(item);
+                }
+            } else {
+                mergedData = data.get(0);
+            }
+
+            // sanity jobs
+            mergedData = VaultEntryUtils.removeDublicates(mergedData);
+            mergedData.sort(new VaultEntryUtils());
+
+            // write new dataset
+            VaultEntryJsonFileExporter exporter = new VaultEntryJsonFileExporter(new ExporterOptions());
+            exporter.exportDataToFile(targetFile.getAbsolutePath(), mergedData, true);
+
+            writeLineToJournal("Created new tag: " + targetTag);
+
+            //TODO sort and remove duplicates
+            // write slices
+            SliceEntryJsonFileExporter sliceExporter = new SliceEntryJsonFileExporter(new ExporterOptions());
+            sliceExporter.exportDataToFile(targetSliceFile.getAbsolutePath(), slices, true);
+
+            writeLineToJournal("Created new slice file for tag: " + targetTag);
+        } else {
+            LOG.warning("Given data was empty.");
+        }
     }
 
     public void copyTag(String sourceTag, String targetTag) throws IOException {
         LOG.log(Level.INFO, "search for source tag: {0}", sourceTag);
         File sourceFile;
+        File sourceSliceFile = null;
         if (sourceTag.equalsIgnoreCase(COMPLETE_DATA)) {
             sourceFile = dataFile;
         } else {
             sourceFile = new File(vaultDir.getAbsolutePath()
-                    .concat(File.separator).concat(sourceTag).concat(".tag.gz"));
+                    .concat(File.separator).concat(sourceTag).concat(TAG_EXTENSION));
+            sourceSliceFile = new File(vaultDir.getAbsolutePath()
+                    .concat(File.separator).concat(sourceTag).concat(TAG_SLICE_EXTENSION));
         }
         File targetFile = new File(vaultDir.getAbsolutePath()
-                .concat(File.separator).concat(targetTag).concat(".tag.gz"));
+                .concat(File.separator).concat(targetTag).concat(TAG_EXTENSION));
         if (sourceFile.exists() && sourceFile.canRead()) {
             Path copyPath = Paths.get(targetFile.getAbsolutePath());
             Path originalPath = Paths.get(sourceFile.getAbsolutePath());
@@ -402,11 +497,28 @@ public class CliRepositoryManager {
         } else {
             LOG.warning("Can't read source file.");
         }
+
+        if (sourceSliceFile != null && sourceSliceFile.exists()) {
+            File targetSliceFile = new File(vaultDir.getAbsolutePath()
+                    .concat(File.separator).concat(targetTag).concat(TAG_SLICE_EXTENSION));
+            Path copyPath = Paths.get(targetSliceFile.getAbsolutePath());
+            Path originalPath = Paths.get(sourceSliceFile.getAbsolutePath());
+            Files.copy(originalPath, copyPath, StandardCopyOption.REPLACE_EXISTING);
+            LOG.info("Tag slices copy successful.");
+            writeLineToJournal("Slices for tag \"" + targetTag
+                    + "\" successfully created from \"" + sourceTag + "\".");
+
+        } else {
+            LOG.warning("Can't read/find source slice file. No target slice file created.");
+        }
     }
 
     public void removeTag(String remove) throws IOException {
         File removeTag = new File(vaultDir.getAbsolutePath()
-                .concat(File.separator).concat(remove).concat(".tag.gz"));
+                .concat(File.separator).concat(remove).concat(TAG_EXTENSION));
+        File removeTagSlice = new File(vaultDir.getAbsolutePath()
+                .concat(File.separator).concat(remove).concat(TAG_SLICE_EXTENSION));
+
         if (removeTag.exists()) {
             removeTag.delete();
             LOG.log(Level.INFO, "Removed tag \"{0}\" successfully.", remove);
@@ -414,5 +526,15 @@ public class CliRepositoryManager {
         } else {
             LOG.log(Level.WARNING, "Could not find tag \"{0}\" to remove.", remove);
         }
+
+        if (removeTagSlice.exists()) {
+            removeTagSlice.delete();
+            LOG.log(Level.INFO, "Removed slice file for tag \"{0}\" successfully.", remove);
+            writeLineToJournal("Removed slices for tag \"" + remove + "\".");
+        } else {
+            LOG.log(Level.WARNING, "Could not find slice file for tag \"{0}\" to remove.", remove);
+        }
     }
+
+    // endregion
 }

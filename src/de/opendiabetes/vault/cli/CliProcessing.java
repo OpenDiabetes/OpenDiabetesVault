@@ -121,13 +121,12 @@ public class CliProcessing implements Callable<Void> {
         List<List<VaultEntry>> inputData = null;
         if (exclusive.combination.input.equalsIgnoreCase(CliRepositoryManager.COMPLETE_DATA)) {
             inputData = new ArrayList<>();
-            inputData.add(repMan.getCompleteData());
+            inputData.add(repMan.getDataFromMaster());
         } else {
             // check if tag exists
             if (repMan.getTagNameList().contains(exclusive.combination.input)) {
                 // load tag data
-                inputData = new ArrayList<>();
-                inputData.add(repMan.getDateFromTag(exclusive.combination.input));
+                inputData = repMan.getDataFromTag(exclusive.combination.input);
             } else {
                 // tag not found --> exit
                 CliManager.exitWithError("Can't load input data. Tag does not exist! Exit.",
@@ -135,7 +134,7 @@ public class CliProcessing implements Callable<Void> {
             }
         }
 
-        if (inputData.isEmpty()) {
+        if (inputData != null || inputData.isEmpty()) {
             CliManager.exitWithError("Can't load input data. Exit.",
                     repMan);
         }
@@ -161,35 +160,9 @@ public class CliProcessing implements Callable<Void> {
 
         if (processingContainer != null) {
             List<List<VaultEntry>> outputData = processingContainer.processData(inputData);
-            List<SliceEntry> slices = null;
             if (outputData != null && !outputData.isEmpty()) {
-                List<VaultEntry> saveData;
-                if (outputData.size() > 1) {
-                    LOG.info("Output contains more than one slice. A slice file will be exported to the tag.");
-                    // generate slice entries
-                    slices = new ArrayList<>();
-                    for (List<VaultEntry> item : outputData) {
-                        if (!item.isEmpty()) {
-                            Date startDate = item.get(0).getTimestamp();
-                            Date endDate = item.get(item.size() - 1).getTimestamp();
-
-                            slices.add(new SliceEntry(startDate,
-                                    TimestampUtils.getDurationInMinutes(startDate, endDate)));
-                        }
-                    }
-
-                    // merge samples
-                    saveData = new ArrayList<>();
-                    for (List<VaultEntry> item : outputData) {
-                        saveData.addAll(item);
-                    }
-                } else {
-                    saveData = outputData.get(0);
-                }
-
-                // TODO add slices to tag
                 // save to repository
-                repMan.createTagFromData(saveData, exclusive.combination.tag);
+                repMan.createTagFromData(outputData, exclusive.combination.tag);
             } else {
                 System.out.println("Output data was empty.");
             }
