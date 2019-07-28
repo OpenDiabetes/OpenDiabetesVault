@@ -261,40 +261,39 @@ public class VaultEntryUtils implements Comparator<VaultEntry> {
         }
         return data;
     }
-    
+
     /**
      * Computes SliceEntry's for a given dataset.
+     *
      * @param data
-     * @return 
+     * @return
      */
-    public static List<SliceEntry> computeSlicesEntries (List<List<VaultEntry>> data){
+    public static List<SliceEntry> computeSlicesEntries(List<List<VaultEntry>> data) {
         List<SliceEntry> slices = null;
         if (data != null && !data.isEmpty()) {
-            if (data.size() > 1) {
-                // generate slice entries
-                slices = new ArrayList<>();
-                for (List<VaultEntry> item : data) {
-                    if (!item.isEmpty()) {
-                        Date startDate = item.get(0).getTimestamp();
-                        Date endDate = item.get(item.size() - 1).getTimestamp();
+            // generate slice entries
+            slices = new ArrayList<>();
+            for (List<VaultEntry> item : data) {
+                if (!item.isEmpty()) {
+                    Date startDate = item.get(0).getTimestamp();
+                    Date endDate = item.get(item.size() - 1).getTimestamp();
 
-                        slices.add(new SliceEntry(startDate,
-                                TimestampUtils.getDurationInMinutes(startDate, endDate)));
-                    }
+                    slices.add(new SliceEntry(startDate,
+                            TimestampUtils.getDurationInMinutes(startDate, endDate)));
                 }
             }
-        } 
-        
+        }
+
         return slices;
     }
-    
+
     /**
      * Merges slices to one dataset.
-     * 
+     *
      * @param data
-     * @return 
+     * @return
      */
-    public static List<VaultEntry> mergeSlices(List<List<VaultEntry>> data){
+    public static List<VaultEntry> mergeSlices(List<List<VaultEntry>> data) {
         if (data != null && !data.isEmpty()) {
             List<VaultEntry> mergedData;
             if (data.size() > 1) {

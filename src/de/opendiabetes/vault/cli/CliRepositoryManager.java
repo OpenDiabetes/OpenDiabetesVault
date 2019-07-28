@@ -223,7 +223,7 @@ public class CliRepositoryManager {
         zipOut.close();
         fos.close();
     }
-    
+
     /**
      * Exports given data to a file wihtin the export folder. Generates a
      * suitable filename.
@@ -234,18 +234,20 @@ public class CliRepositoryManager {
      *
      * @return the file name or null if an error occurred.
      */
-    public String exportDataToExportFolder(List exportData, FileExporter exporter, boolean deflate) {
+    public String exportDataToExportFolder(List exportData, FileExporter exporter, String label, boolean deflate) {
         // prepare file name
         String fileEnding = exporter.getFileEnding();
         if (deflate) {
             fileEnding += ".gz";
         }
         File targetFile = new File(exportDir.getAbsolutePath() + "/" + EasyFormatter
-                .formatTimestampToFilename(new Date()) + "_export." + fileEnding);
+                .formatTimestampToFilename(new Date()) + "_export-" + label + "." + fileEnding);
+        int count = 0;
         while (targetFile.exists()) {
+            count++;
             targetFile = new File(exportDir.getAbsolutePath() + "/" + EasyFormatter
-                    .formatTimestampToFilename(new Date()) + "_export-"
-                    + new Random().nextInt() + "." + fileEnding);
+                    .formatTimestampToFilename(new Date()) + "_export-" + label
+                    + "(" + count + ")." + fileEnding);
         }
 
         // export data
@@ -426,48 +428,23 @@ public class CliRepositoryManager {
         File targetSliceFile = new File(vaultDir.getAbsolutePath()
                 .concat(File.separator).concat(targetTag).concat(TAG_SLICE_EXTENSION));
 
-        List<SliceEntry> slices = null;
         if (data != null && !data.isEmpty()) {
-            List<VaultEntry> mergedData;
-            if (data.size() > 1) {
-                LOG.info("Output contains more than one slice. A slice file will be exported to the tag.");
-                // generate slice entries
-                slices = new ArrayList<>();
-                for (List<VaultEntry> item : data) {
-                    if (!item.isEmpty()) {
-                        Date startDate = item.get(0).getTimestamp();
-                        Date endDate = item.get(item.size() - 1).getTimestamp();
+            List<VaultEntry> mergedData = VaultEntryUtils.mergeSlices(data);
+            List<SliceEntry> slices = VaultEntryUtils.computeSlicesEntries(data);
 
-                        slices.add(new SliceEntry(startDate,
-                                TimestampUtils.getDurationInMinutes(startDate, endDate)));
-                    }
-                }
+            if (slices != null && mergedData != null) {
+                // write new dataset
+                VaultEntryJsonFileExporter exporter = new VaultEntryJsonFileExporter(new ExporterOptions());
+                exporter.exportDataToFile(targetFile.getAbsolutePath(), mergedData, true);
+                writeLineToJournal("Created new tag: " + targetTag);
 
-                // merge slices
-                mergedData = new ArrayList<>();
-                for (List<VaultEntry> item : data) {
-                    mergedData.addAll(item);
-                }
+                // write slices
+                SliceEntryJsonFileExporter sliceExporter = new SliceEntryJsonFileExporter(new ExporterOptions());
+                sliceExporter.exportDataToFile(targetSliceFile.getAbsolutePath(), slices, true);
+                writeLineToJournal("Created new slice file for tag: " + targetTag);
             } else {
-                mergedData = data.get(0);
+                LOG.severe("Error while data preparation. No data saved.");
             }
-
-            // sanity jobs
-            mergedData = VaultEntryUtils.removeDublicates(mergedData);
-            mergedData.sort(new VaultEntryUtils());
-
-            // write new dataset
-            VaultEntryJsonFileExporter exporter = new VaultEntryJsonFileExporter(new ExporterOptions());
-            exporter.exportDataToFile(targetFile.getAbsolutePath(), mergedData, true);
-
-            writeLineToJournal("Created new tag: " + targetTag);
-
-            //TODO sort and remove duplicates
-            // write slices
-            SliceEntryJsonFileExporter sliceExporter = new SliceEntryJsonFileExporter(new ExporterOptions());
-            sliceExporter.exportDataToFile(targetSliceFile.getAbsolutePath(), slices, true);
-
-            writeLineToJournal("Created new slice file for tag: " + targetTag);
         } else {
             LOG.warning("Given data was empty.");
         }

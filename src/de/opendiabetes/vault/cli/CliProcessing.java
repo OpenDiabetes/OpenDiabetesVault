@@ -134,7 +134,7 @@ public class CliProcessing implements Callable<Void> {
             }
         }
 
-        if (inputData != null || inputData.isEmpty()) {
+        if (inputData == null || inputData.isEmpty()) {
             CliManager.exitWithError("Can't load input data. Exit.",
                     repMan);
         }
@@ -158,6 +158,7 @@ public class CliProcessing implements Callable<Void> {
                     repMan);
         }
 
+        // execute processing container & save to tag
         if (processingContainer != null) {
             List<List<VaultEntry>> outputData = processingContainer.processData(inputData);
             if (outputData != null && !outputData.isEmpty()) {

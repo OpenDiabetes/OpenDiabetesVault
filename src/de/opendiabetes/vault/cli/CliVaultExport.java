@@ -82,20 +82,22 @@ public class CliVaultExport implements Callable<Void> {
         switch (exportType) {
             case ODV_CSV:
                 exporter = new VaultEntryCsvFileExporter(new ExporterOptions());
-                exportName = repMan.exportDataToExportFolder(exportData, exporter, deflate);
+                exportName = repMan.exportDataToExportFolder(exportData, exporter,
+                        "data", deflate);
                 if (exportSlices != null && !exportSlices.isEmpty()) {
                     exportSliceName = repMan.exportDataToExportFolder(exportSlices,
                             new SliceEntryCsvFileExporter(new ExporterOptions()),
-                            deflate);
+                            "slices", deflate);
                 }
                 break;
             case ODV_JSON:
                 exporter = new VaultEntryJsonFileExporter(new ExporterOptions());
-                exportName = repMan.exportDataToExportFolder(exportData, exporter, deflate);
+                exportName = repMan.exportDataToExportFolder(exportData, exporter,
+                        "data", deflate);
                 if (exportSlices != null && !exportSlices.isEmpty()) {
                     exportSliceName = repMan.exportDataToExportFolder(exportSlices,
                             new SliceEntryJsonFileExporter(new ExporterOptions()),
-                            deflate);
+                            "slices", deflate);
                 }
                 break;
             case CUSTOM_CSV:
