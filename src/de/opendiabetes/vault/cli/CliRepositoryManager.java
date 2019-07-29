@@ -66,7 +66,7 @@ public class CliRepositoryManager {
     public static final String DIR_VAULT = ".vault";
     public static final String DIR_IMPORT = "importBackup";
     public static final String DIR_EXPORT = "export";
-    public static final String DIR_FILTER = "filterWorkspace";
+    public static final String DIR_FILTER = "filter";
     public static final String DIR_PLOT = "plots";
     public static final String FILE_JOURNAL = "journal.txt";
     public static final String FILE_DATA = "data.json.gz";
