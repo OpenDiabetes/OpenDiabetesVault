@@ -19,15 +19,13 @@ package de.opendiabetes.vault.util;
 import de.opendiabetes.vault.data.container.SliceEntry;
 import de.opendiabetes.vault.data.container.VaultEntry;
 import de.opendiabetes.vault.data.container.VaultEntryType;
-import de.opendiabetes.vault.exporter.ExporterOptions;
-import de.opendiabetes.vault.exporter.json.SliceEntryJsonFileExporter;
-import de.opendiabetes.vault.exporter.json.VaultEntryJsonFileExporter;
 import de.opendiabetes.vault.processing.filter.Filter;
 import de.opendiabetes.vault.processing.filter.FilterResult;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
@@ -342,6 +340,33 @@ public class VaultEntryUtils implements Comparator<VaultEntry> {
         }
 
         return result;
+    }
+
+    /**
+     * Converts deprecated FilterResult format into 2d lists.
+     * 
+     * @param result
+     * @return 
+     */
+    public static List<List<VaultEntry>> getDataFromFilterResult(FilterResult result) {
+        List<VaultEntry> dataset = result.filteredData;
+        List<List<VaultEntry>> slicedDataset = new ArrayList<>();
+
+        for (Map.Entry<Date, Date> sliceMeta : result.timeSeries) {
+            Date start = sliceMeta.getKey();
+            Date end = sliceMeta.getValue();
+
+            List<VaultEntry> sliceData = new ArrayList<>();
+
+            for (VaultEntry item : dataset) {
+                if (TimestampUtils.withinDateTimeSpan(start, end, item.getTimestamp())) {
+                    sliceData.add(item);
+                }
+            }
+            slicedDataset.add(sliceData);
+        }
+
+        return slicedDataset;
     }
 
 }

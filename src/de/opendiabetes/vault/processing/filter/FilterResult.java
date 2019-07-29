@@ -26,6 +26,7 @@ import java.util.Map;
  *
  * @author juehv
  */
+@Deprecated
 public class FilterResult {
 
     public final List<VaultEntry> filteredData;
