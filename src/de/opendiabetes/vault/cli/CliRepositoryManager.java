@@ -66,24 +66,30 @@ public class CliRepositoryManager {
     public static final String DIR_VAULT = ".vault";
     public static final String DIR_IMPORT = "importBackup";
     public static final String DIR_EXPORT = "export";
+    public static final String DIR_FILTER = "filterWorkspace";
+    public static final String DIR_PLOT = "plots";
     public static final String FILE_JOURNAL = "journal.txt";
     public static final String FILE_DATA = "data.json.gz";
     public static final String TAG_EXTENSION = ".tag.gz";
     public static final String TAG_SLICE_EXTENSION = ".tag-slices.gz";
-    public static final String REPOSITORY_VERSION = "0.2";
+    public static final String REPOSITORY_VERSION = "0.3";
 
     private final FileWriter journalWriter;
     private final File vaultDir;
     private final File importDir;
     private final File exportDir;
+    private final File filterDir;
+    private final File plotDir;
     private final File journalFile;
     private final File dataFile;
 
-    private CliRepositoryManager(File vaultDir, File importDir, File exportDir, File journalFile, File dataFile) throws IOException {
+    private CliRepositoryManager(File vaultDir, File importDir, File exportDir, File filterDir, File plotDir, File journalFile, File dataFile) throws IOException {
         this.journalWriter = new FileWriter(journalFile, true);
         this.vaultDir = vaultDir;
         this.importDir = importDir;
         this.exportDir = exportDir;
+        this.filterDir = filterDir;
+        this.plotDir = plotDir;
         this.journalFile = journalFile;
         this.dataFile = dataFile;
     }
@@ -104,6 +110,8 @@ public class CliRepositoryManager {
         File vaultDir = new File(targetDir.getAbsolutePath().concat(File.separator).concat(DIR_VAULT));
         File importDir = new File(targetDir.getAbsolutePath().concat(File.separator).concat(DIR_IMPORT));
         File exportDir = new File(targetDir.getAbsolutePath().concat(File.separator).concat(DIR_EXPORT));
+        File filterDir = new File(targetDir.getAbsolutePath().concat(File.separator).concat(DIR_FILTER));
+        File plotDir = new File(targetDir.getAbsolutePath().concat(File.separator).concat(DIR_PLOT));
         File journalFile = new File(vaultDir.getAbsolutePath().concat(File.separator).concat(FILE_JOURNAL));
         File dataFile = new File(vaultDir.getAbsolutePath().concat(File.separator).concat(FILE_DATA));
 
@@ -132,15 +140,31 @@ public class CliRepositoryManager {
         if (!exportDir.exists() && !createDir(exportDir)) {
             LOG.severe("Can't create new export directory.");
             return null;
-        } else if (importDir.exists() && !importDir.isDirectory()) {
+        } else if (exportDir.exists() && !exportDir.isDirectory()) {
             LOG.severe("Export path exists but is not a directory.");
+            return null;
+        }
+
+        if (!filterDir.exists() && !createDir(filterDir)) {
+            LOG.severe("Can't create new filter workspace directory.");
+            return null;
+        } else if (filterDir.exists() && !filterDir.isDirectory()) {
+            LOG.severe(" filter workspace path exists but is not a directory.");
+            return null;
+        }
+
+        if (!plotDir.exists() && !createDir(plotDir)) {
+            LOG.severe("Can't create new filter workspace directory.");
+            return null;
+        } else if (plotDir.exists() && !plotDir.isDirectory()) {
+            LOG.severe(" filter workspace path exists but is not a directory.");
             return null;
         }
 
         // create instance and journal
         try {
             INSTANCE = new CliRepositoryManager(vaultDir, importDir, exportDir,
-                    journalFile, dataFile);
+                    filterDir, plotDir, journalFile, dataFile);
 
             INSTANCE.writeLineToJournal("OpenDiabetes Vault Repository Journal");
             INSTANCE.writeLineToJournal("-------------------------------------");
@@ -161,23 +185,28 @@ public class CliRepositoryManager {
             File vaultDir = new File(targetDir.getAbsolutePath().concat(File.separator).concat(DIR_VAULT));
             File importDir = new File(targetDir.getAbsolutePath().concat(File.separator).concat(DIR_IMPORT));
             File exportDir = new File(targetDir.getAbsolutePath().concat(File.separator).concat(DIR_EXPORT));
+            File filterDir = new File(targetDir.getAbsolutePath().concat(File.separator).concat(DIR_FILTER));
+            File plotDir = new File(targetDir.getAbsolutePath().concat(File.separator).concat(DIR_PLOT));
             File journalFile = new File(vaultDir.getAbsolutePath().concat(File.separator).concat(FILE_JOURNAL));
             File dataFile = new File(vaultDir.getAbsolutePath().concat(File.separator).concat(FILE_DATA));
 
             // check repository structure
             if (!vaultDir.exists() || !importDir.exists() || !exportDir.exists()
-                    || !journalFile.exists()) {
+                    || !filterDir.exists() || !plotDir.exists() || !journalFile.exists()) {
                 LOG.severe("Not a OpenDiabetesVault repository. Create repository with init fist.");
                 return null;
             }
 
             if (!vaultDir.canWrite() || !importDir.canWrite() || !exportDir.canWrite()
+                    || !filterDir.canWrite() || !plotDir.canWrite()
                     || !journalFile.canWrite()) {
                 LOG.severe("No write permission for this repository.");
                 return null;
             }
 
-            if (!vaultDir.isDirectory() || !importDir.isDirectory() || !exportDir.isDirectory()) {
+            if (!vaultDir.isDirectory() || !importDir.isDirectory()
+                    || !exportDir.isDirectory() || !filterDir.isDirectory()
+                    || !plotDir.isDirectory()) {
                 LOG.severe("Some directories are corrupted.");
                 return null;
             }
@@ -185,7 +214,7 @@ public class CliRepositoryManager {
             // create journal writer and object
             try {
                 INSTANCE = new CliRepositoryManager(vaultDir, importDir, exportDir,
-                        journalFile, dataFile);
+                        filterDir, plotDir, journalFile, dataFile);
             } catch (IOException ex) {
                 LOG.log(Level.SEVERE, "Error writing journal file.", ex);
                 return null;

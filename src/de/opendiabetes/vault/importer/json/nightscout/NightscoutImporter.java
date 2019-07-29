@@ -29,6 +29,7 @@ import de.opendiabetes.vault.util.VaultEntryUtils;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
+import java.time.format.DateTimeParseException;
 import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.Date;
@@ -85,8 +86,9 @@ public class NightscoutImporter extends FileImporter {
         }
 
         List<VaultEntry> entries = new ArrayList<>();
-        try {
-            for (JsonElement e : element.getAsJsonArray()) {
+        for (JsonElement e : element.getAsJsonArray()) {
+
+            try {
                 JsonObject o = e.getAsJsonObject();
                 boolean valid = false;
 
@@ -103,24 +105,34 @@ public class NightscoutImporter extends FileImporter {
                 }
 
                 // insulin bolus
-                if (o.has("insulin") && !o.get("insulin").isJsonNull()) {
-                    date = TimestampUtils.fromIso8601DateString(o.get("timestamp").getAsString());
+                if (o.has("insulin") && !o.get("insulin").isJsonNull()
+                        && o.has("created_at") && !o.get("created_at").isJsonNull()) {
+                    date = TimestampUtils.fromIso8601DateString(o.get("created_at").getAsString());
                     entries.add(new VaultEntry(origin, SOURCE, VaultEntryType.BOLUS_NORMAL, date, o.get("insulin").getAsDouble()));
                     valid = true;
                 }
 
                 // meals
-                if (o.has("carbs") && !o.get("carbs").isJsonNull()) {
-                    date = TimestampUtils.fromIso8601DateString(o.get("timestamp").getAsString());
+                if (o.has("carbs") && !o.get("carbs").isJsonNull()
+                        && o.has("created_at") && !o.get("created_at").isJsonNull()) {
+                    date = TimestampUtils.fromIso8601DateString(o.get("created_at").getAsString());
                     entries.add(new VaultEntry(origin, SOURCE, VaultEntryType.MEAL_MANUAL, date, o.get("carbs").getAsDouble()));
                     valid = true;
                 }
 
                 // temporary basal
-                if (o.has("eventType") && o.get("eventType").getAsString().equals("Temp Basal")) {
-                    date = TimestampUtils.fromIso8601DateString(o.get("timestamp").getAsString());
-                    VaultEntry tmpEntry = new VaultEntry(origin, SOURCE, VaultEntryType.BASAL_TEMP, date, o.get("rate").getAsDouble());
-                    tmpEntry.setValueExtension(o.get("duration").getAsDouble());
+                if (o.has("eventType") && o.get("eventType").getAsString().equalsIgnoreCase("Temp Basal")
+                        && o.has("created_at") && !o.get("created_at").isJsonNull()) {
+                    date = TimestampUtils.fromIso8601DateString(o.get("created_at").getAsString());
+                    double duration = o.get("duration").getAsDouble();
+                    double rate;
+                    if (duration < 0.1) {
+                        rate = 0.0;
+                    } else {
+                        rate = o.get("absolute").getAsDouble();
+                    }
+                    VaultEntry tmpEntry = new VaultEntry(origin, SOURCE, VaultEntryType.BASAL_TEMP, date, rate);
+                    tmpEntry.setValueExtension(duration);
                     entries.add(tmpEntry);
                     valid = true;
                 }
@@ -130,10 +142,11 @@ public class NightscoutImporter extends FileImporter {
                     continue;
 
                 }
+
+            } catch (DateTimeParseException | NumberFormatException | 
+                    IllegalStateException | NullPointerException ex) {
+                LOG.severe("Malformed data entry.");
             }
-        } catch (NumberFormatException | IllegalStateException | NullPointerException e) {
-            LOG.severe("Invalid source data");
-            return null;
         }
 
         // sort entries by date
