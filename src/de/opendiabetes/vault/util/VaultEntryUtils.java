@@ -344,10 +344,11 @@ public class VaultEntryUtils implements Comparator<VaultEntry> {
 
     /**
      * Converts deprecated FilterResult format into 2d lists.
-     * 
+     *
      * @param result
-     * @return 
+     * @return
      */
+    @Deprecated
     public static List<List<VaultEntry>> getDataFromFilterResult(FilterResult result) {
         List<VaultEntry> dataset = result.filteredData;
         List<List<VaultEntry>> slicedDataset = new ArrayList<>();
@@ -356,14 +357,16 @@ public class VaultEntryUtils implements Comparator<VaultEntry> {
             Date start = sliceMeta.getKey();
             Date end = sliceMeta.getValue();
 
-            List<VaultEntry> sliceData = new ArrayList<>();
+            if (TimestampUtils.getDurationInMinutes(start, start) >= 1) {
+                List<VaultEntry> sliceData = new ArrayList<>();
 
-            for (VaultEntry item : dataset) {
-                if (TimestampUtils.withinDateTimeSpan(start, end, item.getTimestamp())) {
-                    sliceData.add(item);
+                for (VaultEntry item : dataset) {
+                    if (TimestampUtils.withinDateTimeSpan(start, end, item.getTimestamp())) {
+                        sliceData.add(item);
+                    }
                 }
+                slicedDataset.add(sliceData);
             }
-            slicedDataset.add(sliceData);
         }
 
         return slicedDataset;
