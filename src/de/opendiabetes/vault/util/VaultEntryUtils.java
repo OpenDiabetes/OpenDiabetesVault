@@ -357,7 +357,7 @@ public class VaultEntryUtils implements Comparator<VaultEntry> {
             Date start = sliceMeta.getKey();
             Date end = sliceMeta.getValue();
 
-            if (TimestampUtils.getDurationInMinutes(start, start) >= 1) {
+            if (TimestampUtils.getDurationInMinutes(start, end) >= 1) {
                 List<VaultEntry> sliceData = new ArrayList<>();
 
                 for (VaultEntry item : dataset) {
