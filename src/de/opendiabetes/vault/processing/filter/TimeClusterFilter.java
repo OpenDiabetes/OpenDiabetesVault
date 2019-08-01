@@ -100,7 +100,7 @@ public class TimeClusterFilter extends Filter {
 
                     if (clusteredList.size() > 0) {
 
-                        clusteredList = VaultEntryUtils.slice(clusteredList, filters).filteredData;
+                        clusteredList = VaultEntryUtils.sliceFromFilter(clusteredList, filters).filteredData;
                     }
 
                     startTimestamp = TimestampUtils.addMinutesToTimestamp(compareDate, clusterSpacing);
@@ -112,7 +112,7 @@ public class TimeClusterFilter extends Filter {
                     if (!vaultEntry.getTimestamp().before(startTimestamp) && vaultEntry.getTimestamp().before(compareDate)) {
                         clusteredList.add(vaultEntry);
                         if (isLastIndex && !clusterResult.contains(vaultEntry)) {
-                            clusteredList = VaultEntryUtils.slice(clusteredList, filters).filteredData;
+                            clusteredList = VaultEntryUtils.sliceFromFilter(clusteredList, filters).filteredData;
                             clusterResult.addAll(clusteredList);
 
                         }

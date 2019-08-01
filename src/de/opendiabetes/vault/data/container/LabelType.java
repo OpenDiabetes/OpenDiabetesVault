@@ -16,6 +16,8 @@
  */
 package de.opendiabetes.vault.data.container;
 
+import java.util.logging.Logger;
+
 /**
  * Possible labels for classification.
  *
@@ -28,9 +30,36 @@ public enum LabelType {
     BOLUS_AMOUNT_LOW,
     BOLUS_AMOUNT_HIGH,
     BOLUS_TIME_EARLY,
-    BOLUS_TIME_LATE;
+    BOLUS_TIME_LATE,
+    FREE_LABEL;
+
+    private static final Logger LOG = Logger.getLogger(LabelType.class.getName());
+    private String labelName = null;
+
+    public String getLabelName() {
+        if (labelName != null) {
+            return labelName;
+        } else {
+            return this.toString();
+        }
+    }
+
+    public static LabelType createFreeLabel(String label) {
+        LOG.warning("You are using free labels. Please implement needed labels into the system!");
+        LabelType returnType = FREE_LABEL;
+        returnType.labelName = label.toUpperCase();
+        return returnType;
+    }
 
     public static LabelType valueOfIgnoreCase(String value) {
-        return LabelType.valueOf(value.toUpperCase());
+        try {
+            return LabelType.valueOf(value.toUpperCase());
+        } catch (Exception ex) {
+            if (value != null) {
+                return createFreeLabel(value);
+            } else {
+                return null;
+            }
+        }
     }
 }

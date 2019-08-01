@@ -322,7 +322,8 @@ public class VaultEntryUtils implements Comparator<VaultEntry> {
      * @param filters filters to be used
      * @return sliced FilterResult
      */
-    public static FilterResult slice(List<VaultEntry> data, List<Filter> filters) {
+    @Deprecated
+    public static FilterResult sliceFromFilter(List<VaultEntry> data, List<Filter> filters) {
         FilterResult result = new FilterResult();
         if (data != null && filters != null) {
             System.out.println("Start Slicing");
@@ -340,6 +341,29 @@ public class VaultEntryUtils implements Comparator<VaultEntry> {
         }
 
         return result;
+    }
+
+    public static List<List<VaultEntry>> slice(List<VaultEntry> data, List<SliceEntry> slices) {
+        List<List<VaultEntry>> slicedDataset = new ArrayList<>();
+
+        for (SliceEntry slice : slices) {
+            Date start = slice.startTimestamp;
+            Date end = TimestampUtils.addMinutesToTimestamp(start,
+                    slice.durationInMinutes);
+
+            if (slice.durationInMinutes > 0) {
+                List<VaultEntry> sliceData = new ArrayList<>();
+
+                for (VaultEntry item : data) {
+                    if (TimestampUtils.withinDateTimeSpan(start, end, item.getTimestamp())) {
+                        sliceData.add(item);
+                    }
+                }
+                slicedDataset.add(sliceData);
+            }
+        }
+
+        return slicedDataset;
     }
 
     /**
